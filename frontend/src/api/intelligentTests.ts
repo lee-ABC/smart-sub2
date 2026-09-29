@@ -65,8 +65,8 @@ export const intelligentTestsAPI = {
     return (await apiClient.get<TestPage<TestRecord>>(`${base}/records`, { params, signal })).data
   },
   async detail(id: number) { return (await apiClient.get<TestRecord>(`${base}/records/${id}`)).data },
-  async run(account_ids: number[], test_types: string[], idempotency_key: string, models?: Record<string, string>) {
-    return (await apiClient.post<TestSubmission>(`${base}/run`, { account_ids, test_types, idempotency_key, ...(models ? { models } : {}) })).data
+  async run(account_ids: number[], test_types: string[], idempotency_key: string, models?: Record<string, string>, group_id?: number) {
+    return (await apiClient.post<TestSubmission>(`${base}/run`, { account_ids, test_types, idempotency_key, ...(models ? { models } : {}), ...(group_id && group_id > 0 ? { group_id } : {}) })).data
   },
   async image(id: number, publicView = false, signal?: AbortSignal) { return (await apiClient.get<Blob>(publicView ? `/account-capabilities/results/${id}/image` : `${base}/records/${id}/image`, { responseType: 'blob', signal })).data },
   async cancel(id: number) { return (await apiClient.post<TestRecord>(`${base}/records/${id}/cancel`)).data },

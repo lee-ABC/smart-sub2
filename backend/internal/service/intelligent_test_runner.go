@@ -107,7 +107,12 @@ func (s *AccountTestService) RunIntelligentTest(ctx context.Context, r *Intellig
 	if r.ConfigSnapshot == nil {
 		return errors.New("missing configuration")
 	}
-	r.Model = resolveIntelligentTestModel(account, r.ConfigSnapshot.Model)
+	ctx, route, err := prepareExcelAccountTestContext(ctx, account, r.ConfigSnapshot.GroupID, r.ConfigSnapshot.Model)
+	if err != nil {
+		r.Status = "request_error"
+		return err
+	}
+	r.Model = resolveIntelligentTestModel(account, excelAccountTestModel(ctx, r.ConfigSnapshot.Model))
 	if err := accountTestCooldown(ctx, account, r.Model, time.Now()); err != nil {
 		return err
 	}
@@ -120,12 +125,19 @@ func (s *AccountTestService) RunIntelligentTest(ctx context.Context, r *Intellig
 		return errors.New("missing configuration")
 	}
 	// Keep the requested model and the resolved execution model separately.
-	r.Model = resolveIntelligentTestModel(account, r.ConfigSnapshot.Model)
+	r.Model = resolveIntelligentTestModel(account, excelAccountTestModel(ctx, r.ConfigSnapshot.Model))
 	if err := validateIntelligentTextModel(account.GetMappedModel(r.Model)); err != nil {
 		r.Status = "request_error"
 		return err
 	}
 	r.ConfigSnapshot.Execution = ResolveProtectionRuntime(account, s.cfg, s.pluginManager)
+	r.ConfigSnapshot.Execution.OutboundTransport = route.Transport
+	r.ConfigSnapshot.Execution.TestGroupID = route.GroupID
+	if route.Transport == "excel" {
+		r.ConfigSnapshot.Execution.EffectiveTLS = "excel_sidecar"
+		r.ConfigSnapshot.Execution.TLSProfileDigest = ""
+		r.ConfigSnapshot.Execution.TLSReason = "由 Excel 侧车出站；未观测上游 TLS 握手，原生 TLS 配置不代表侧车行为"
+	}
 	r.ConfigSnapshot.Execution.RequestedModel = r.ConfigSnapshot.Model
 	r.ConfigSnapshot.Execution.PromptDigest = protectionPromptDigest(r.Input)
 	r.ConfigSnapshot.Execution.Model = r.Model
@@ -154,7 +166,7 @@ func (s *AccountTestService) RunIntelligentTest(ctx context.Context, r *Intellig
 	if prepared.IsCNProvider() && prepared.GetAPIProtocol() == APIProtocolAdaptive {
 		err = clone.testCNProviderChatCompletionsConnection(c, prepared, r.Model, r.Input)
 	} else {
-		err = clone.testAccountConnectionForAccount(c, prepared, r.Model, r.Input, AccountTestModeDefault, AccountTestOptions{})
+		err = clone.testAccountConnectionForAccount(c, prepared, r.Model, r.Input, AccountTestModeDefault, AccountTestOptions{GroupID: r.ConfigSnapshot.GroupID})
 	}
 	textOutput, eventError, model, complete := parseIntelligentSSE(recorder.body.String())
 	if capture.trafficWait != nil && capture.status == 0 {

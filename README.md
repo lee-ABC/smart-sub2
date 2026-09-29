@@ -1,3 +1,5 @@
+> **Excel account pools:** See [EXCEL_ACCOUNT_POOL.md](EXCEL_ACCOUNT_POOL.md) for per-group Excel/native routing and preservation of other native models.
+
 > **Deployed source snapshot (2026-09-19):** This repository publishes the source snapshot for `sub2api:turnstate-auto-20260919-125957`. See [SOURCE_RELEASE.md](SOURCE_RELEASE.md) for build instructions, verification evidence, and limitations. State-header handling is experimental; this is not a verified rate-limit bypass or model-quality guarantee. The upstream documentation below is preserved for attribution and general reference.
 
 <div align="center">

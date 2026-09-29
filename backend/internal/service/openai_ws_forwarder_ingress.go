@@ -114,8 +114,13 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 		}()
 	}
 
+	var excelErr error
+	ctx, excelErr = prepareExcelRequestContext(ctx, c, account, excelRoutingModel(account, gjson.GetBytes(firstClientMessage, "model").String(), ""))
+	if excelErr != nil {
+		return excelErr
+	}
 	wsDecision := s.getOpenAIWSProtocolResolver().Resolve(account)
-	forceHTTPBridge := account.Platform == PlatformGrok ||
+	forceHTTPBridge := isExcelRequest(ctx) || account.Platform == PlatformGrok ||
 		(s.pluginManager != nil && s.pluginManager.ShouldRouteOpenAIOAuth(account))
 	modeRouterV2Enabled := s != nil && s.cfg != nil && s.cfg.Gateway.OpenAIWS.ModeRouterV2Enabled
 	ingressMode := OpenAIWSIngressModeCtxPool

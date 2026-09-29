@@ -17,6 +17,9 @@ func (s *OpenAIGatewayService) doOpenAIUpstream(request *http.Request, proxyURL 
 	})
 }
 func (s *OpenAIGatewayService) doOpenAIUpstreamWithoutTraffic(request *http.Request, proxyURL string, account *Account) (*http.Response, error) {
+	if response, handled, err := s.forwardExcelHTTP(request, proxyURL, account); handled {
+		return response, err
+	}
 	profile, err := resolveMode1TLSProfile(account)
 	if err != nil {
 		return nil, err
@@ -47,6 +50,12 @@ func (s *AccountTestService) doOpenAIAccountTestUpstream(
 	})
 }
 func (s *AccountTestService) doOpenAIAccountTestUpstreamWithoutTraffic(request *http.Request, proxyURL string, account *Account, useTLSFallback bool) (*http.Response, error) {
+	// Preserve this probe's repository and response capture, not the live gateway's.
+	gateway := &OpenAIGatewayService{accountRepo: s.accountRepo, httpUpstream: s.httpUpstream}
+	if response, handled, err := gateway.forwardExcelHTTP(request, proxyURL, account); handled {
+		return response, err
+	}
+
 	profile, err := resolveMode1TLSProfile(account)
 	if err != nil {
 		return nil, err

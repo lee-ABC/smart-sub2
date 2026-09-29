@@ -9,13 +9,13 @@ import TestDetailDialog from '../TestDetailDialog.vue'
 import TestGeneratedImage from '../TestGeneratedImage.vue'
 import UserAccountCapabilities from '@/components/account/UserAccountCapabilities.vue'
 import { intelligentTestsAPI, newTestRequestKey, type TestSetting, type TestRecord, type TestAccount } from '@/api/intelligentTests'
-import { getAvailableModels } from '@/api/admin/accounts'
+import { getAvailableModels, getById } from '@/api/admin/accounts'
 
 vi.mock('@/api/intelligentTests', () => ({
   intelligentTestsAPI: { settings: vi.fn(), run: vi.fn(), saveSetting: vi.fn(), detail: vi.fn(), publicDetail: vi.fn(), publicAccounts: vi.fn(), publicTests: vi.fn(), image: vi.fn(), reevaluate: vi.fn(), cancel: vi.fn(), previewEvaluation: vi.fn() },
   newTestRequestKey: vi.fn(() => 'fixed-request-key')
 }))
-vi.mock('@/api/admin/accounts', () => ({ getAvailableModels: vi.fn() }))
+vi.mock('@/api/admin/accounts', () => ({ getAvailableModels: vi.fn(), getById: vi.fn() }))
 vi.mock('@/stores/app', () => ({ useAppStore: () => ({ showSuccess: vi.fn(), showError: vi.fn() }) }))
 const BaseDialog = defineComponent({ props: ['show'], template: '<div v-if="show"><slot /><slot name="footer" /></div>' })
 const settings: TestSetting[] = [{ test_type: 'pelican', enabled: true, user_visible: false, config: { prompt: 'Draw a pelican', model: '', evaluator: 'svg_structure', timeout_seconds: 180 } }, { test_type: 'candy', enabled: false, user_visible: true, config: { prompt: '12 minus 5?', model: '', evaluator: 'exact_answer', expected_answer: '7', timeout_seconds: 120 } }]
@@ -23,6 +23,7 @@ const record: TestRecord = { id: 1, account_id: 42, test_type: 'pelican', status
 const global = { stubs: { BaseDialog, Pagination: true, TestStatusBadge: true } }
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(getById).mockResolvedValue({ id: 42, platform: 'openai', group_ids: [], groups: [] } as Awaited<ReturnType<typeof getById>>)
   vi.mocked(intelligentTestsAPI.settings).mockResolvedValue(structuredClone(settings))
   vi.mocked(getAvailableModels).mockResolvedValue([{ id: 'gpt-5.3-codex', display_name: 'GPT-5.3 Codex' }, { id: 'gpt-5.5' }])
 })
@@ -254,6 +255,37 @@ describe('ordinary-user visibility', () => {
     expect(wrapper.text()).not.toContain('原始响应')
     expect(wrapper.text()).not.toContain('检测时防降智')
     expect(intelligentTestsAPI.detail).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
+})
+
+describe('Excel test group routing', () => {
+  it('sends the selected group and never reuses a retry key across groups', async () => {
+    vi.mocked(getById).mockResolvedValue({ id: 42, platform: 'openai', group_ids: [4,9], groups: [] } as Awaited<ReturnType<typeof getById>>)
+    vi.mocked(newTestRequestKey).mockReturnValueOnce('excel-group-nine').mockReturnValueOnce('native-group-four')
+    vi.mocked(intelligentTestsAPI.run).mockRejectedValue(new Error('network'))
+    const wrapper = mount(QuickTestDialog, { props: { accountId: 42 }, global }); await flushPromises()
+    await wrapper.get('[data-testid=quick-test-group]').setValue('9'); await flushPromises()
+    expect(getAvailableModels).toHaveBeenLastCalledWith(42, 9)
+    await wrapper.findAll('button')[0].trigger('click'); await flushPromises()
+    expect(intelligentTestsAPI.run).toHaveBeenLastCalledWith([42], ['pelican'], 'excel-group-nine', undefined, 9)
+    await wrapper.get('[data-testid=quick-test-group]').setValue('4'); await flushPromises()
+    await wrapper.findAll('button')[0].trigger('click'); await flushPromises()
+    expect(intelligentTestsAPI.run).toHaveBeenLastCalledWith([42], ['pelican'], 'native-group-four', undefined, 4)
+    wrapper.unmount()
+  })
+  it('automatically uses a single account group without guessing across multiple groups', async () => {
+    vi.mocked(getById).mockResolvedValue({ id: 42, platform: 'openai', group_ids: [9], groups: [] } as Awaited<ReturnType<typeof getById>>)
+    const wrapper = mount(QuickTestDialog, { props: { accountId: 42 }, global }); await flushPromises()
+    expect((wrapper.get('[data-testid=quick-test-group]').element as HTMLSelectElement).value).toBe('9')
+    expect(getAvailableModels).toHaveBeenLastCalledWith(42, 9)
+    wrapper.unmount()
+  })
+  it('displays the persisted transport instead of inferring Excel from model names', async () => {
+    vi.mocked(intelligentTestsAPI.detail).mockResolvedValue({ ...record, status: 'completed', model: 'gpt-6-sol', config_snapshot: { execution: { outbound_transport: 'excel', test_group_id: 9, effective_tls: 'excel_sidecar' } } })
+    const wrapper = mount(TestDetailDialog, { props: { recordId: 1 }, global }); await flushPromises()
+    expect(wrapper.get('[data-testid=test-outbound-transport]').text()).toBe('Excel')
+    expect(wrapper.get('[data-testid=execution-snapshot]').text()).toContain('#9')
     wrapper.unmount()
   })
 })

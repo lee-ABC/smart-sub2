@@ -41,6 +41,13 @@
         </span>
       </div>
 
+      <label v-if="isOpenAIAccount && testGroups.length" class="block text-sm text-gray-600 dark:text-gray-300">测试分组（跟随分组的 Excel / 原生设置）
+        <select v-model.number="selectedTestGroup" data-testid="account-test-group" class="input mt-1.5" :disabled="status === 'connecting'" @change="loadAvailableModels">
+          <option :value="0">自动（多分组含 Excel 时需明确选择）</option>
+          <option v-for="group in testGroups" :key="group.id" :value="group.id">{{ group.name }} (#{{ group.id }})</option>
+        </select>
+      </label>
+
       <!-- Grok: mode first, then optional model / mode params -->
       <div v-if="isGrokAccount" class="space-y-1.5">
         <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -406,6 +413,13 @@ const streamingContent = ref('')
 const errorMessage = ref('')
 const availableModels = ref<ClaudeModel[]>([])
 const selectedModelId = ref('')
+const selectedTestGroup = ref(0)
+const testGroups = computed(() => {
+  const account = props.account
+  const ids = [...new Set([...(account?.group_ids ?? []), ...(account?.groups ?? []).map(group => group.id)])]
+  return ids.map(id => ({ id, name: account?.groups?.find(group => group.id === id)?.name || '分组' }))
+})
+let modelLoadVersion = 0
 const testPrompt = ref('')
 const loadingModels = ref(false)
 let abortController: AbortController | null = null
@@ -734,9 +748,10 @@ const pickDefaultModelForMode = () => {
 }
 
 watch(
-  () => props.show,
-  async (newVal) => {
+  () => [props.show, props.account?.id] as const,
+  async ([newVal]) => {
     if (newVal && props.account) {
+      selectedTestGroup.value = testGroups.value.length === 1 ? testGroups.value[0].id : 0
       testPrompt.value = ''
       testMode.value = 'default'
       grokTestMode.value = 'text'
@@ -763,10 +778,14 @@ watch(grokTestMode, () => {
 const loadAvailableModels = async () => {
   if (!props.account) return
 
+  const current = ++modelLoadVersion
+  const accountId = props.account.id
   loadingModels.value = true
+  errorMessage.value = ''
   selectedModelId.value = '' // Reset selection before loading
   try {
-    const models = await adminAPI.accounts.getAvailableModels(props.account.id)
+    const models = await adminAPI.accounts.getAvailableModels(accountId, selectedTestGroup.value || undefined)
+    if (current !== modelLoadVersion || props.account?.id !== accountId || !props.show) return
     availableModels.value = props.account.platform === 'gemini' || props.account.platform === 'antigravity'
       ? sortTestModels(models)
       : models
@@ -782,11 +801,13 @@ const loadAvailableModels = async () => {
     }
   } catch (error) {
     console.error('Failed to load available models:', error)
+    if (current !== modelLoadVersion || props.account?.id !== accountId) return
+    errorMessage.value = '模型列表读取失败；若账号属于多个分组，请先选择测试分组。'
     // Fallback to empty list
     availableModels.value = []
     selectedModelId.value = ''
   } finally {
-    loadingModels.value = false
+    if (current === modelLoadVersion) loadingModels.value = false
   }
 }
 
@@ -846,6 +867,7 @@ const startTest = async () => {
   try {
     const requestBody: {
       model_id: string
+      group_id?: number
       prompt: string
       mode?: string
       image_data_url?: string
@@ -856,6 +878,7 @@ const startTest = async () => {
     }
     if (isOpenAIAccount.value) {
       requestBody.mode = testMode.value
+      if (selectedTestGroup.value > 0) requestBody.group_id = selectedTestGroup.value
     }
     if (isGrokAccount.value) {
       // Always send explicit Grok mode. search/tts/stt/realtime are standalone
@@ -948,8 +971,15 @@ const handleEvent = (event: {
   audio_url?: string
   video_url?: string
   mime_type?: string
+  data?: { transport?: string; group_id?: number }
 }) => {
   switch (event.type) {
+    case 'test_route': {
+      const route = event.data
+      const name = route?.transport === 'excel' ? 'Excel' : route?.transport === 'native' ? '原生' : route?.transport === 'account_upstream' ? '账号配置上游' : '未记录'
+      addLine(`出站通道：${name}；测试分组：${route?.group_id ? '#' + route.group_id : '未指定'}`, 'text-cyan-400')
+      break
+    }
     case 'test_start':
       addLine(t('admin.accounts.connectedToApi'), 'text-green-400')
       if (event.model) {

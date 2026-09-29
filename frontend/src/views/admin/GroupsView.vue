@@ -3212,6 +3212,8 @@
           </div>
         </div>
 
+        <GroupExcelMode v-if="editForm.platform === 'openai' && editingGroup" :key="editingGroup.id" :group-id="editingGroup.id" />
+
         <!-- 固定账号获取 Codex Model Manifest（仅 openai 平台，仅编辑对话框） -->
         <CodexManifestAccountsField
           v-if="editForm.platform === 'openai' && editingGroup"
@@ -4362,6 +4364,7 @@
 </template>
 
 <script setup lang="ts">
+import GroupExcelMode from "@/components/admin/groups/GroupExcelMode.vue";
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
 import GroupStatisticsDialog from '@/components/admin/groups/GroupStatisticsDialog.vue'
 import { useI18n } from "vue-i18n";

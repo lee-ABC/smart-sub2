@@ -71,6 +71,11 @@ func (s *OpenAIGatewayService) forwardAsChatCompletions(
 	defaultMappedModel string,
 	compatPromptCacheTenantIsolated bool,
 ) (*OpenAIForwardResult, error) {
+	var excelErr error
+	ctx, excelErr = prepareExcelRequestContext(ctx, c, account, excelRoutingModel(account, gjson.GetBytes(body, "model").String(), defaultMappedModel))
+	if excelErr != nil {
+		return nil, excelErr
+	}
 	beginUpstreamResponseModelObservation(c)
 	ClearActualOpenAIUpstreamEndpoint(c)
 	if shouldForwardOpenAIResponsesViaRawChatCompletions(account) {

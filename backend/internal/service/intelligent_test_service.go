@@ -139,6 +139,9 @@ func (s *IntelligentTestService) Enqueue(ctx context.Context, actor int64, req I
 	if err := s.authorize(ctx, actor); err != nil {
 		return nil, err
 	}
+	if req.GroupID < 0 {
+		return nil, intelligentTestBad("test group ID must be positive")
+	}
 	if !regexp.MustCompile(`^[A-Za-z0-9_-]{16,100}$`).MatchString(req.IdempotencyKey) {
 		return nil, intelligentTestBad("idempotency_key must contain 16–100 letters, digits, underscores or hyphens")
 	}

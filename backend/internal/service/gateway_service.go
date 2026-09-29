@@ -282,6 +282,7 @@ func redactAuthHeaderValue(v string) string {
 
 func safeHeaderValueForLog(key string, v string) string {
 	key = strings.ToLower(strings.TrimSpace(key))
+	if strings.HasPrefix(key, "x-sub2-excel-") { return "[redacted]" }
 	switch key {
 	case "authorization", "x-api-key":
 		return redactAuthHeaderValue(v)

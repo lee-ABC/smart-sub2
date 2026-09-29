@@ -13,6 +13,8 @@
       <section v-if="!publicView && execution" class="rounded-xl border border-gray-200 p-4 dark:border-dark-700" data-testid="execution-snapshot">
         <h4 class="mb-2 text-sm font-semibold">执行时账号配置</h4>
         <dl class="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+          <div><dt class="text-xs text-gray-500">出站通道</dt><dd data-testid="test-outbound-transport">{{ execution.outbound_transport === 'excel' ? 'Excel' : execution.outbound_transport === 'native' ? '原生' : execution.outbound_transport === 'account_upstream' ? '账号配置上游' : '未记录' }}</dd></div>
+          <div><dt class="text-xs text-gray-500">测试分组</dt><dd>{{ execution.test_group_id ? `#${execution.test_group_id}` : '未指定' }}</dd></div>
           <div><dt class="text-xs text-gray-500">策略</dt><dd>{{ execution.strategy }}</dd></div>
           <div><dt class="text-xs text-gray-500">身份模式</dt><dd>{{ execution.identity_mode }}</dd></div>
           <div><dt class="text-xs text-gray-500">有效传输</dt><dd>{{ execution.effective_tls }}</dd></div>
@@ -70,7 +72,7 @@ const emit = defineEmits<{ close: []; history: [id: number, type: string]; run: 
 const record = ref<TestRecord | null>(null)
 const execution = computed(() => {
   if (props.publicView) return undefined
-  const config = record.value?.config_snapshot as { execution?: { strategy: string; identity_mode: string; effective_tls: string; concurrency: number; tls_reason?: string; integrity_mode?: string } } | undefined
+  const config = record.value?.config_snapshot as { execution?: { strategy: string; identity_mode: string; effective_tls: string; concurrency: number; tls_reason?: string; integrity_mode?: string; outbound_transport?: string; test_group_id?: number } } | undefined
   return config?.execution
 })
 const loading = ref(false), error = ref(''), fullImage = ref(false)

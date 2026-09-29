@@ -6,6 +6,7 @@ import (
 )
 
 type IntelligentTestConfig struct {
+	GroupID        int64                   `json:"group_id,omitempty"`
 	AnswerType     string                  `json:"answer_type,omitempty"`
 	AnswerUnit     string                  `json:"answer_unit,omitempty"`
 	AnswerUnitMode string                  `json:"answer_unit_mode,omitempty"`
@@ -98,6 +99,7 @@ type IntelligentTestRecords struct {
 	PageSize int                      `json:"page_size"`
 }
 type IntelligentTestEnqueue struct {
+	GroupID    int64    `json:"group_id,omitempty"`
 	AccountIDs []int64  `json:"account_ids"`
 	TestTypes  []string `json:"test_types"`
 	// Models optionally overrides the configured model per test type for this

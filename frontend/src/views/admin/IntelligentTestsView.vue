@@ -151,10 +151,11 @@ function showHistory(id: number, type: string) { detailId.value = null; void rou
 async function run(ids: number[], types: string[]) {
   if (running.value || !ids.length || !types.length) return
   if (ids.length > 50) { app.showError('每批最多选择 50 个账号'); return }
-  const signature = JSON.stringify([[...ids].sort((a, b) => a - b), [...types].sort()])
+  const testGroupId = Number(applied.group_id) || undefined
+  const signature = JSON.stringify([[...ids].sort((a, b) => a - b), [...types].sort(), testGroupId])
   if (runSignature !== signature) { runKey = newTestRequestKey(); runSignature = signature }
   running.value = true
-  try { const data = await intelligentTestsAPI.run(ids, types, runKey); app.showSuccess(testSubmissionMessage(data)); runSignature = ''; await load(false) }
+  try { const data = await intelligentTestsAPI.run(ids, types, runKey, undefined, testGroupId); app.showSuccess(testSubmissionMessage(data)); runSignature = ''; await load(false) }
   catch (err) { app.showError(extractApiErrorMessage(err, '任务提交失败，可重试')) }
   finally { running.value = false }
 }

@@ -11,22 +11,24 @@ import (
 // Safe diagnostic metadata: never include credentials, identity seeds or URLs
 // containing proxy authentication. This is a computed plan, not a handshake.
 type ProtectionRuntimeState struct {
-	IntegrityMode    string    `json:"integrity_mode"`
-	RequestedModel   string    `json:"requested_model,omitempty"`
-	Strategy         string    `json:"strategy"`
-	PolicyVersion    int       `json:"policy_version"`
-	IdentityMode     string    `json:"identity_mode"`
-	ConfiguredTLS    string    `json:"configured_tls"`
-	EffectiveTLS     string    `json:"effective_tls"`
-	TLSReason        string    `json:"tls_reason,omitempty"`
-	Observed         bool      `json:"observed"`
-	Concurrency      int       `json:"concurrency"`
-	ProxyID          *int64    `json:"proxy_id,omitempty"`
-	ProxyMode        string    `json:"proxy_mode"`
-	AccountRevision  time.Time `json:"account_revision"`
-	TLSProfileDigest string    `json:"tls_profile_digest,omitempty"`
-	PromptDigest     string    `json:"prompt_digest,omitempty"`
-	Model            string    `json:"model,omitempty"`
+	OutboundTransport string    `json:"outbound_transport,omitempty"`
+	TestGroupID       int64     `json:"test_group_id,omitempty"`
+	IntegrityMode     string    `json:"integrity_mode"`
+	RequestedModel    string    `json:"requested_model,omitempty"`
+	Strategy          string    `json:"strategy"`
+	PolicyVersion     int       `json:"policy_version"`
+	IdentityMode      string    `json:"identity_mode"`
+	ConfiguredTLS     string    `json:"configured_tls"`
+	EffectiveTLS      string    `json:"effective_tls"`
+	TLSReason         string    `json:"tls_reason,omitempty"`
+	Observed          bool      `json:"observed"`
+	Concurrency       int       `json:"concurrency"`
+	ProxyID           *int64    `json:"proxy_id,omitempty"`
+	ProxyMode         string    `json:"proxy_mode"`
+	AccountRevision   time.Time `json:"account_revision"`
+	TLSProfileDigest  string    `json:"tls_profile_digest,omitempty"`
+	PromptDigest      string    `json:"prompt_digest,omitempty"`
+	Model             string    `json:"model,omitempty"`
 }
 
 func ResolveProtectionRuntime(a *Account, cfg *config.Config, plugins *PluginManager) *ProtectionRuntimeState {

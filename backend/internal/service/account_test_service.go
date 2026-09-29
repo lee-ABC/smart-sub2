@@ -68,6 +68,7 @@ type TestEvent struct {
 // AccountTestOptions carries optional media for admin connectivity tests.
 // ImageDataURL / AudioDataURL are full data URLs (data:<mime>;base64,...).
 type AccountTestOptions struct {
+	GroupID      int64
 	ImageDataURL string
 	AudioDataURL string
 }
@@ -337,6 +338,12 @@ func (s *AccountTestService) TestAccountConnection(c *gin.Context, accountID int
 	if err != nil {
 		return s.sendErrorAndEnd(c, "Account not found")
 	}
+	ctx, _, err = prepareExcelAccountTestContext(ctx, account, testOpts.GroupID, modelID)
+	if err != nil {
+		return s.sendErrorAndEnd(c, err.Error())
+	}
+	c.Request = c.Request.WithContext(ctx)
+	modelID = excelAccountTestModel(ctx, modelID)
 	if err := accountTestCooldown(ctx, account, resolveIntelligentTestModel(account, modelID), time.Now()); err != nil {
 		var wait *TestAdmissionWaitError
 		if errors.As(err, &wait) {
@@ -370,6 +377,22 @@ func (s *AccountTestService) TestAccountConnection(c *gin.Context, accountID int
 // testAccountConnectionForAccount always invokes the real provider adapter.
 // Capability jobs use this path after authorization and persistence.
 func (s *AccountTestService) testAccountConnectionForAccount(c *gin.Context, account *Account, modelID, prompt, mode string, testOpts AccountTestOptions) error {
+	ctx, route, err := prepareExcelAccountTestContext(c.Request.Context(), account, testOpts.GroupID, modelID)
+	if err != nil {
+		return s.sendErrorAndEnd(c, err.Error())
+	}
+	c.Request = c.Request.WithContext(ctx)
+	modelID = excelAccountTestModel(ctx, modelID)
+	if account.IsOpenAI() {
+		c.Writer.Header().Set("Content-Type", "text/event-stream")
+		c.Writer.Header().Set("Cache-Control", "no-cache")
+		c.Writer.Header().Set("X-Accel-Buffering", "no")
+		s.sendEvent(c, TestEvent{Type: "test_route", Data: route})
+	}
+	if isExcelRequest(ctx) && (normalizeAccountTestMode(mode) == AccountTestModeCompact || isOpenAIImageModel(account.GetMappedModel(modelID))) {
+		return s.sendErrorAndEnd(c, "Excel 通道暂不支持压缩或独立图像生成测试，未回退原生通道")
+	}
+
 	// Route to platform-specific test method
 	if account.IsCNProvider() {
 		switch account.GetAPIProtocol() {

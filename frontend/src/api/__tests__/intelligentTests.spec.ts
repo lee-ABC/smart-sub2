@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { apiClient } from '@/api/client'
 import { intelligentTestsAPI, type TestSetting } from '@/api/intelligentTests'
 
-vi.mock('@/api/client', () => ({ apiClient: { put: vi.fn() } }))
+vi.mock('@/api/client', () => ({ apiClient: { put: vi.fn(), post: vi.fn() } }))
 
 describe('test settings submission snapshot', () => {
   it('returns the values actually sent when the editable source changes during the request', async () => {
@@ -20,4 +20,12 @@ describe('test settings submission snapshot', () => {
     expect(saved.config.prompt).toBe('Original question')
     expect(saved.config.expected_answer).toBe('12')
   })
+})
+
+it('only sends a positive selected group and preserves requests without one', async () => {
+  vi.mocked(apiClient.post).mockResolvedValue({ data: { records: [], reused: false } })
+  await intelligentTestsAPI.run([42], ['pelican'], 'group-test-key', undefined, 9)
+  expect(apiClient.post).toHaveBeenLastCalledWith('/admin/intelligent-tests/run', { account_ids: [42], test_types: ['pelican'], idempotency_key: 'group-test-key', group_id: 9 })
+  await intelligentTestsAPI.run([42], ['pelican'], 'legacy-test-key')
+  expect(apiClient.post).toHaveBeenLastCalledWith('/admin/intelligent-tests/run', { account_ids: [42], test_types: ['pelican'], idempotency_key: 'legacy-test-key' })
 })

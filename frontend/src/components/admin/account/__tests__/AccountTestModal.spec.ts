@@ -221,3 +221,22 @@ describe('AccountTestModal', () => {
     })
   })
 })
+
+it('OpenAI tests send the selected group and display server-confirmed transport', async () => {
+  getAvailableModels.mockResolvedValue([{ id: 'gpt-6-sol', display_name: 'gpt-6-sol' }])
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(createStreamResponse([
+    'data: ' + JSON.stringify({ type: 'test_route', data: { transport: 'excel', group_id: 9 } }) + String.fromCharCode(10),
+    'data: ' + JSON.stringify({ type: 'test_start', model: 'gpt-6-sol' }) + String.fromCharCode(10),
+    'data: ' + JSON.stringify({ type: 'test_complete', success: true }) + String.fromCharCode(10)
+  ])))
+  const wrapper = mountModal({ id: 42, name: 'OAuth test', platform: 'openai', type: 'oauth', status: 'active', group_ids: [4,9] })
+  await wrapper.setProps({ show: true }); await flushPromises()
+  await wrapper.get('[data-testid=account-test-group]').setValue('9'); await flushPromises()
+  expect(getAvailableModels).toHaveBeenLastCalledWith(42, 9)
+  await wrapper.findAll('button').find(button => button.text().includes('admin.accounts.startTest'))!.trigger('click'); await flushPromises()
+  const body = JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body))
+  expect(body.group_id).toBe(9)
+  expect(body.model_id).toBe('gpt-6-sol')
+  expect(wrapper.text()).toContain('出站通道：Excel；测试分组：#9')
+  wrapper.unmount(); vi.unstubAllGlobals()
+})

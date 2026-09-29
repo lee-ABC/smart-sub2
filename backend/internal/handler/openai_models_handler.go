@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
+	middleware2 "github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -17,8 +18,12 @@ func (h *GatewayHandler) pinnedOpenAIModels(c *gin.Context, group *service.Group
 		writeOpenAIModelsError(c, http.StatusInternalServerError, "api_error", "OpenAI model discovery is not configured")
 		return
 	}
+	ifNoneMatch := c.GetHeader("If-None-Match")
+	if excelGroupEnabled(group) {
+		ifNoneMatch = ""
+	}
 	response, account, err := h.openAIGatewayService.FetchPinnedOpenAIModelsList(
-		c.Request.Context(), group, h.maxAccountSwitches, c.GetHeader("If-None-Match"),
+		c.Request.Context(), group, h.maxAccountSwitches, ifNoneMatch,
 	)
 	if c.Request.Context().Err() != nil {
 		return
@@ -40,6 +45,14 @@ func writeOpenAIModelsError(c *gin.Context, status int, errorType, message strin
 }
 
 func writeOpenAIModelsResponse(c *gin.Context, manifest *service.OpenAIModelsResponse) {
+	if key, ok := middleware2.GetAPIKeyFromContext(c); ok && key != nil {
+		merged, err := mergeExcelModelsResponse(key.Group, manifest, c.GetHeader("If-None-Match"))
+		if err != nil {
+			writeOpenAIModelsError(c, 500, "api_error", "Cannot merge model catalog")
+			return
+		}
+		manifest = merged
+	}
 	if manifest.ETag != "" {
 		c.Header("ETag", manifest.ETag)
 	}

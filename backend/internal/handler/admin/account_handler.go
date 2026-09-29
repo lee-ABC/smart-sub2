@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"log/slog"
 	"net/http"
@@ -1253,6 +1254,7 @@ func (h *AccountHandler) Delete(c *gin.Context) {
 
 // TestAccountRequest represents the request body for testing an account
 type TestAccountRequest struct {
+	GroupID int64  `json:"group_id"`
 	ModelID string `json:"model_id"`
 	Prompt  string `json:"prompt"`
 	Mode    string `json:"mode"`
@@ -1287,9 +1289,13 @@ func (h *AccountHandler) Test(c *gin.Context) {
 
 	var req TestAccountRequest
 	// Allow empty body, model_id is optional
-	_ = c.ShouldBindJSON(&req)
+	if err := c.ShouldBindJSON(&req); err != nil && !errors.Is(err, io.EOF) {
+		response.BadRequest(c, "Invalid test request or group ID")
+		return
+	}
 
 	opts := service.AccountTestOptions{
+		GroupID:      req.GroupID,
 		ImageDataURL: req.ImageDataURL,
 		AudioDataURL: req.AudioDataURL,
 	}
@@ -2791,23 +2797,54 @@ func (h *AccountHandler) GetAvailableModels(c *gin.Context) {
 
 	// Handle OpenAI accounts
 	if account.IsOpenAI() {
+		var groupID int64
+		if raw := c.Query("group_id"); raw != "" {
+			groupID, err = strconv.ParseInt(raw, 10, 64)
+			if err != nil || groupID < 0 {
+				response.BadRequest(c, "Invalid test group ID")
+				return
+			}
+		}
+		ids, excel, routeErr := service.ExcelAccountTestModels(c.Request.Context(), account, groupID)
+		if routeErr != nil {
+			response.BadRequest(c, routeErr.Error())
+			return
+		}
+		mergeModels := func(native []openai.Model) []openai.Model {
+			if !excel {
+				return native
+			}
+			models := append([]openai.Model(nil), native...)
+			seen := map[string]bool{}
+			for _, m := range models {
+				seen[m.ID] = true
+			}
+			for _, id := range ids {
+				if !seen[id] {
+					models = append(models, openai.Model{ID: id, Object: "model", Type: "model", DisplayName: id})
+					seen[id] = true
+				}
+			}
+			return models
+		}
+
 		// Prefer the shared, account-keyed upstream catalog. If discovery fails,
 		// retain the legacy local catalog below so the test dialog remains usable.
 		if h.accountTestService != nil {
 			if models, fetchErr := h.accountTestService.FetchOpenAIAccountModels(c.Request.Context(), account); fetchErr == nil {
-				response.Success(c, models)
+				response.Success(c, mergeModels(models))
 				return
 			}
 		}
 		// OpenAI 自动透传会绕过常规模型改写，测试/模型列表也应回落到默认模型集。
 		if account.IsOpenAIPassthroughEnabled() {
-			response.Success(c, openai.DefaultModels)
+			response.Success(c, mergeModels(openai.DefaultModels))
 			return
 		}
 
 		mapping := account.GetModelMapping()
 		if len(mapping) == 0 {
-			response.Success(c, openai.DefaultModels)
+			response.Success(c, mergeModels(openai.DefaultModels))
 			return
 		}
 
@@ -2831,7 +2868,7 @@ func (h *AccountHandler) GetAvailableModels(c *gin.Context) {
 				})
 			}
 		}
-		response.Success(c, models)
+		response.Success(c, mergeModels(models))
 		return
 	}
 

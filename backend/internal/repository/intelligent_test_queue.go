@@ -27,7 +27,8 @@ func (r *intelligentTestRepository) Enqueue(ctx context.Context, actor int64, re
 		Accounts []int64
 		Types    []string
 		Models   map[string]string
-	}{accountIDs, types, req.Models})
+		GroupID  int64 `json:"GroupID,omitempty"`
+	}{accountIDs, types, req.Models, req.GroupID})
 	sum := sha256.Sum256(payload)
 	fingerprint := hex.EncodeToString(sum[:])
 	tx, err := r.db.BeginTx(ctx, nil)
@@ -96,9 +97,19 @@ func (r *intelligentTestRepository) Enqueue(ctx context.Context, actor int64, re
 		if err != nil {
 			return nil, err
 		}
+		if req.GroupID > 0 {
+			var member bool
+			if err := tx.QueryRowContext(ctx, `SELECT EXISTS(SELECT 1 FROM account_groups WHERE account_id=$1 AND group_id=$2)`, id, req.GroupID).Scan(&member); err != nil {
+				return nil, err
+			}
+			if !member {
+				return nil, infraerrors.BadRequest("INTELLIGENT_TEST_GROUP_MISMATCH", fmt.Sprintf("账号 %d 不属于测试分组 #%d", id, req.GroupID))
+			}
+		}
 		for _, kind := range types {
 			cfg := settings[kind]
 			cfg.Execution = nil
+			cfg.GroupID = req.GroupID
 			if override := strings.TrimSpace(req.Models[kind]); override != "" {
 				cfg.Model = override
 			}
@@ -140,7 +151,7 @@ func (r *intelligentTestRepository) Enqueue(ctx context.Context, actor int64, re
 	if err != nil {
 		return nil, err
 	}
-	if err := insertIntelligentAudit(ctx, tx, actor, "admin.intelligent_tests.enqueue", map[string]any{"account_ids": accountIDs, "test_types": types, "record_ids": ids, "count": len(ids), "idempotency_key": req.IdempotencyKey}); err != nil {
+	if err := insertIntelligentAudit(ctx, tx, actor, "admin.intelligent_tests.enqueue", map[string]any{"group_id": req.GroupID, "account_ids": accountIDs, "test_types": types, "record_ids": ids, "count": len(ids), "idempotency_key": req.IdempotencyKey}); err != nil {
 		return nil, err
 	}
 	return out, tx.Commit()

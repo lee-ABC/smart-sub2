@@ -3497,6 +3497,7 @@
         :show-access-token-option="false"
         :show-codex-session-import-option="form.platform === 'openai'"
         :show-bps-login-option="form.platform === 'openai'"
+        :bps-batch-import-options="getBpsBatchImportOptions"
         :proxy-id="randomProxyEnabled ? null : form.proxy_id"
         :show-agent-identity-option="form.platform === 'openai'"
         :show-codex-pat-option="form.platform === 'openai'"
@@ -3513,6 +3514,7 @@
         @validate-session-token="handleValidateSessionToken"
         @import-codex-session="handleOpenAIImportCodexSession"
         @confirm-bps-login="handleOpenAIImportBpsLogin"
+        @bps-batch-imported="handleBpsBatchImported"
         @import-codex-pat="handleOpenAIImportCodexPAT"
         @import-sso="handleGrokImportSSO"
         @authorize-password="handleGrokAuthorizePassword"
@@ -6413,6 +6415,32 @@ const handleOpenAIImportCodexSession = async (content: string) => {
 let bpsImportGeneration = 0
 watch([() => props.show, () => form.platform, step], () => { bpsImportGeneration++ }, { flush: 'sync' })
 onBeforeUnmount(() => { bpsImportGeneration++ })
+
+const getBpsBatchImportOptions = () => {
+  if (form.platform !== 'openai' || !props.show) return null
+  const credentialExtras = buildOpenAICodexImportCredentialExtras()
+  if (credentialExtras === null) return null
+  return withProxySelection({
+    notes: form.notes || null,
+    proxy_id: form.proxy_id,
+    concurrency: form.concurrency,
+    load_factor: form.load_factor ?? undefined,
+    priority: form.priority,
+    rate_multiplier: form.rate_multiplier,
+    group_ids: [...form.group_ids],
+    expires_at: form.expires_at,
+    auto_pause_on_expired: autoPauseOnExpired.value,
+    credential_extras: Object.keys(credentialExtras).length > 0 ? credentialExtras : undefined,
+    extra: withUpstreamRequestIdHeader(buildOpenAICodexImportExtra()),
+    update_existing: true
+  })
+}
+
+const handleBpsBatchImported = () => {
+  appStore.showSuccess(t('admin.accounts.oauth.openai.bpsBatchImportDone'))
+  // Refresh the account list without closing/cancelling still-running batch jobs.
+  emit('created')
+}
 
 const handleOpenAIImportBpsLogin = async (jobId: string) => {
   const oauthClient = openaiOAuth

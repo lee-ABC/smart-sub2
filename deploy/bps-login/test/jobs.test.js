@@ -41,8 +41,8 @@ test('ten minute absolute TTL also erases ready credentials and waits',async t=>
 });
 
 test('bounded capacity reserves running/awaiting jobs and caps terminal entries',async t=>{
- const store=make(t,{engineFor:()=>({login:async(_r,{requestEmailCode,signal})=>requestEmailCode({signal})})});const a=store.create('1',input);const b=store.create('1',input);assert.throws(()=>store.create('1',input),{code:'CAPACITY_EXCEEDED'});store.cancel('1',a.id);store.cancel('1',b.id);await tick();assert.equal(store.active,0);
- const full=make(t);for(let i=0;i<32;i++){const item=full.create('1',input);await settle(full,item.id);}assert.throws(()=>full.create('1',input),{code:'CAPACITY_EXCEEDED'});
+ const store=make(t,{maxActive:2,engineFor:()=>({login:async(_r,{requestEmailCode,signal})=>requestEmailCode({signal})})});const a=store.create('1',input);const b=store.create('1',input);assert.throws(()=>store.create('1',input),{code:'CAPACITY_EXCEEDED'});store.cancel('1',a.id);store.cancel('1',b.id);await tick();assert.equal(store.active,0);
+ const full=make(t,{maxJobs:32});for(let i=0;i<32;i++){const item=full.create('1',input);await settle(full,item.id);}assert.throws(()=>full.create('1',input),{code:'CAPACITY_EXCEEDED'});
 });
 
 test('unexpected failures/progress are fixed codes; no raw secrets leak',async t=>{
@@ -67,4 +67,14 @@ test('private HTTP API requires key and owner and never returns token on status'
  const req=async(path,{method='GET',owner='1',auth=key,body}={})=>fetch(base+path,{method,headers:{authorization:'Bearer '+auth,'x-sub2-bps-owner':owner,'content-type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
  assert.deepEqual(await(await req('/healthz')).json(),{ready:true});assert.equal((await req('/internal/v1/jobs',{method:'POST',auth:'bad',body:input})).status,401);assert.equal((await req('/internal/v1/jobs',{method:'POST',owner:'',body:input})).status,400);
  const created=await(await req('/internal/v1/jobs',{method:'POST',body:input})).json();await tick();const status=await(await req('/internal/v1/jobs/'+created.id)).json();assert.equal(status.status,'ready');assert.ok(!JSON.stringify(status).includes(credential().refresh_token));assert.equal((await req('/internal/v1/jobs/'+created.id,{owner:'2'})).status,404);assert.equal((await req('/internal/v1/jobs/'+created.id+'/result',{method:'POST'})).status,200);assert.equal((await req('/internal/v1/jobs/'+created.id,{method:'DELETE'})).status,200);assert.equal((await req('/internal/v1/jobs/'+created.id)).status,404);
+});
+
+
+test('default capacity is five globally, waits retain slots and cancellation releases them',async t=>{
+ const store=make(t,{engineFor:()=>({login:async(_r,{requestEmailCode,signal})=>requestEmailCode({signal})})});
+ const tasks=Array.from({length:5},(_,i)=>store.create(String(i+1),input));
+ await tick();assert.equal(store.active,5);assert.equal(store.maxJobs,128);
+ assert.throws(()=>store.create('6',input),{code:'CAPACITY_EXCEEDED'});
+ store.cancel('1',tasks[0].id);await tick();assert.equal(store.active,4);
+ store.create('6',input);assert.equal(store.active,5);
 });

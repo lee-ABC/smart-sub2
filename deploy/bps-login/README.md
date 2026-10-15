@@ -39,8 +39,8 @@ session/email/password/mfa/email_otp/authorization/exchange/validate. Fixed code
 never contain arbitrary upstream responses. Successful status includes bounded
 nonsecret preview fields; AT/RT are available only from the private result route.
 
-Jobs have a10-minute absolute TTL including ready results, at most2 active jobs
-(including waits) and32 retained jobs. No passwords/TOTP/tokens go to disk, argv,
+Jobs have a10-minute absolute TTL including ready results, at most5 active jobs
+(including waits) and128 retained jobs. No passwords/TOTP/tokens go to disk, argv,
 progress output or logs. A restart intentionally loses unfinished jobs/results.
 
 `team_first` defaults to CPA's strict complete Business workspace verification;

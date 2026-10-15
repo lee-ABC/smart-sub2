@@ -24,7 +24,7 @@ export function validateInput(input){
 }
 
 export class JobStore{
- constructor({engineFor,ready=()=>true,clock=Date.now,ttlMs=600000,maxActive=2,maxJobs=32}={}){
+ constructor({engineFor,ready=()=>true,clock=Date.now,ttlMs=600000,maxActive=5,maxJobs=128}={}){
   this.engineFor=engineFor;this.ready=ready;this.clock=clock;this.ttlMs=ttlMs;this.maxActive=maxActive;this.maxJobs=maxJobs;this.jobs=new Map();this.active=0;this.stopped=false;
   this.sweeper=setInterval(()=>this.sweep(),1000);this.sweeper.unref();
  }

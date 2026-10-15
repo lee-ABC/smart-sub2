@@ -88,6 +88,7 @@ const OAuthAuthorizationFlowStub = defineComponent({
     showManualOption: Boolean,
     showCodexSessionImportOption: Boolean,
     showBpsLoginOption: Boolean,
+    bpsBatchImportOptions: Function,
     proxyId: Number,
     showAgentIdentityOption: Boolean,
     showCodexPatOption: Boolean,
@@ -95,7 +96,7 @@ const OAuthAuthorizationFlowStub = defineComponent({
   },
   data: () => ({ inputMethod: 'manual' }),
   methods: { reset() { this.inputMethod = 'manual' } },
-  emits: ['import-codex-session', 'import-codex-pat', 'confirm-bps-login'],
+  emits: ['import-codex-session', 'import-codex-pat', 'confirm-bps-login', 'bps-batch-imported'],
   template: `
     <div>
       <button data-testid="import-codex-session" @click="$emit('import-codex-session', 'session-json')">session</button>
@@ -640,6 +641,21 @@ describe('CreateAccountModal OpenAI long-context billing', () => {
     expect(payload).not.toHaveProperty('contents')
     expect(payload).not.toHaveProperty('access_token')
     expect(payload).not.toHaveProperty('refresh_token')
+  })
+
+  it('keeps batch jobs open after successful subset import and reuses selected import settings', async () => {
+    const wrapper = await openCodexImportStep(1)
+    const flow = wrapper.getComponent(OAuthAuthorizationFlowStub)
+    const settings = flow.props('bpsBatchImportOptions')?.()
+    expect(settings).toBeTruthy()
+    expect(settings.update_existing).toBe(true)
+    expect(settings).not.toHaveProperty('content')
+    expect(settings).not.toHaveProperty('access_token')
+    flow.vm.$emit('bps-batch-imported')
+    await flushPromises()
+    expect(wrapper.emitted('created')).toHaveLength(1)
+    expect(wrapper.emitted('close')).toBeUndefined()
+    expect(wrapper.findComponent(OAuthAuthorizationFlowStub).exists()).toBe(true)
   })
 
   it('blocks duplicate BPS confirmation while import is in flight', async () => {

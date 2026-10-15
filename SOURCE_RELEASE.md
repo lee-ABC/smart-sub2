@@ -17,6 +17,20 @@ bit-identical rebuild. The deployment build provenance below describes the
 historical initial snapshot and is retained as such. No release tag, manual
 release workflow, database migration or service restart accompanies this push.
 
+## Batch login addition — 2026-10-16
+
+The BPS login panel now supports up to100 newline-separated
+`email----password----Base32-TOTP-secret` records with five concurrent jobs.
+It imports only validated successful jobs, keeps OTP/workspace challenges
+interactive, preserves current import settings and never retries unknown import
+outcomes automatically. Importing a ready subset does not close the dialog or
+cancel other running jobs. Native credential handling and inference routing are
+unchanged; the site's account-health setting is not changed by this feature.
+
+Validation:78 focused frontend cases, TypeScript and targeted ESLint;58 helper
+cases. No real provider login was performed with example credentials.
+The private helper remains bounded:5 active jobs,128 retained jobs,10-minute TTL.
+
 ---
 
 # 部署版本源码快照 / Deployed source snapshot

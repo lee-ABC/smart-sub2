@@ -375,14 +375,14 @@
           </div>
         </div>
 
-        <BpsLoginFlow
-          v-if="inputMethod === 'bps_login' && platform === 'openai' && showBpsLoginOption"
-          ref="bpsLoginFlowRef"
-          :proxy-id="proxyId"
-          :importing="loading"
-          :import-error="error"
-          @confirm="emit('confirm-bps-login', $event)"
-        />
+        <div v-if="inputMethod === 'bps_login' && platform === 'openai' && showBpsLoginOption" class="space-y-3">
+          <div class="flex gap-2" role="tablist" :aria-label="t('admin.accounts.oauth.openai.bpsLoginAuth')">
+            <button type="button" class="btn btn-secondary" role="tab" :aria-selected="bpsLoginMode === 'batch'" :disabled="loading" data-testid="bps-mode-batch" @click="bpsLoginMode = 'batch'">{{ t('admin.accounts.oauth.openai.bpsBatchMode') }}</button>
+            <button type="button" class="btn btn-secondary" role="tab" :aria-selected="bpsLoginMode === 'single'" :disabled="loading" data-testid="bps-mode-single" @click="bpsLoginMode = 'single'">{{ t('admin.accounts.oauth.openai.bpsSingleMode') }}</button>
+          </div>
+          <BpsBatchLoginFlow v-if="bpsLoginMode === 'batch'" ref="bpsBatchFlowRef" :proxy-id="proxyId" :get-import-options="bpsBatchImportOptions" @imported="emit('bps-batch-imported')" />
+          <BpsLoginFlow v-else ref="bpsLoginFlowRef" :proxy-id="proxyId" :importing="loading" :import-error="error" @confirm="emit('confirm-bps-login', $event)" />
+        </div>
 
         <!-- Codex auth.json / session credential batch import -->
         <div v-if="inputMethod === 'codex_session' || inputMethod === 'agent_identity'" class="space-y-4">
@@ -940,6 +940,8 @@ import { useI18n } from 'vue-i18n'
 import { useClipboard } from '@/composables/useClipboard'
 import Icon from '@/components/icons/Icon.vue'
 import BpsLoginFlow from './BpsLoginFlow.vue'
+import BpsBatchLoginFlow from './BpsBatchLoginFlow.vue'
+import type { BpsBatchImportOptions } from '@/utils/bpsBatchLogin'
 import type { AddMethod, AuthInputMethod } from '@/composables/useAccountOAuth'
 import type { AccountPlatform } from '@/types'
 import { adminAPI } from '@/api/admin'
@@ -961,6 +963,7 @@ interface Props {
   showAccessTokenOption?: boolean
   showCodexSessionImportOption?: boolean
   showBpsLoginOption?: boolean
+  bpsBatchImportOptions?: () => BpsBatchImportOptions | null
   proxyId?: number | null
   showAgentIdentityOption?: boolean
   showCodexPatOption?: boolean
@@ -1016,6 +1019,7 @@ const emit = defineEmits<{
   'import-access-token': [accessToken: string]
   'import-codex-session': [content: string]
   'confirm-bps-login': [jobId: string]
+  'bps-batch-imported': []
   'import-codex-pat': [accessToken: string]
   'import-sso': [content: string]
   'authorize-password': [emailPasswordInput: string]
@@ -1061,6 +1065,8 @@ const oauthImportantNotice = computed(() => {
 // Local state
 const inputMethod = ref<AuthInputMethod>(props.initialInputMethod)
 const bpsLoginFlowRef = ref<{ reset: () => void } | null>(null)
+const bpsBatchFlowRef = ref<{ reset: () => void } | null>(null)
+const bpsLoginMode = ref<'single' | 'batch'>('batch')
 const isAgentIdentityInput = computed(() => inputMethod.value === 'agent_identity')
 const authCodeInput = ref('')
 const sessionKeyInput = ref('')
@@ -1334,6 +1340,7 @@ defineExpose({
   inputMethod,
   reset: () => {
     bpsLoginFlowRef.value?.reset()
+    bpsBatchFlowRef.value?.reset()
     authCodeInput.value = ''
     oauthState.value = ''
     projectId.value = ''

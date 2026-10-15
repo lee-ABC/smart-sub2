@@ -49,6 +49,22 @@ Source provenance and component notices are retained under each helper's
 `UPSTREAM.md`, `licenses/` and third-party notice files. The native binary SHA256
 is `2ec853496634545e7a7ea028715763948d55bbdd97aca7ecaa9fea8c2ebb08df`.
 
+## Batch 2FA login
+
+The OpenAI BPS login panel defaults to a bounded batch mode. Paste one credential
+per line as `email----password----Base32-TOTP-secret`; the parser uses the first and
+last separator so a password may contain `----`. It accepts at most100 non-empty
+rows and starts at most5 private login jobs at once. Invalid or duplicate rows are
+reported by line number without echoing their contents.
+
+Only rows reaching a validated `ready` state are offered to the one-click import
+button. Email OTP and workspace challenges remain per-row and can be completed
+without resending the password or TOTP secret. Failed, expired and cancelled rows
+are hidden by default; unknown import outcomes are marked for review and are not
+automatically retried. The import freezes the current proxy/groups/priority and
+other account settings, uses the full email as the account name, and preserves
+native credentials separately.
+
 ## Thread identity and safe logging
 
 The optional private YAML named by `BPS_RELAY_CONFIG_FILE` accepts

@@ -93,6 +93,7 @@ type openAIWSHandshakeCompatibilityKey struct {
 	codexWindowID       string
 	conversationID      string
 	transportKey        string
+	basispointsScope    string
 }
 
 type openAIWSConnLease struct {
@@ -2064,6 +2065,9 @@ func normalizeOpenAIWSBetaFeatures(headers http.Header) string {
 func normalizeOpenAIWSHandshakeCompatibility(account *Account, headers http.Header) openAIWSHandshakeCompatibilityKey {
 	key := openAIWSHandshakeCompatibilityKey{
 		betaFeatures: normalizeOpenAIWSBetaFeatures(headers),
+	}
+	if headers.Get("X-Basispoints-Auth-Mode") == "chatgpt" {
+		key.basispointsScope = headers.Get("Session_Id")
 	}
 	mode := activeCodexFingerprintMode(account)
 	if mode == codexFingerprintOff {

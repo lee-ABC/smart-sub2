@@ -75,6 +75,7 @@ func TestExcelAdminTestEntrypointsFollowSelectedGroup(t *testing.T) {
 			t.Run(fmtTestRouteName(intelligent, group), func(t *testing.T) {
 				excelTestConfig(t)
 				fixture := newAstraOAuthSetup(t, false)
+				excelAttachBPS(fixture.account)
 				fixture.account.GroupIDs = []int64{4, 9}
 				excelSetResponse(fixture, "gpt-6-sol")
 				repo := &intelligentRunnerRepo{account: fixture.account}
@@ -102,7 +103,7 @@ func TestExcelAdminTestEntrypointsFollowSelectedGroup(t *testing.T) {
 				require.Equal(t, "gpt-6-sol", gjson.GetBytes(fixture.upstream.lastBody, "model").String())
 				if group == 9 {
 					require.Equal(t, "/internal/v1/responses", fixture.upstream.lastReq.URL.Path)
-					require.Equal(t, "oauth-token", fixture.upstream.lastReq.Header.Get("X-Sub2-Excel-Access-Token"))
+					require.Equal(t, excelBPSToken(), fixture.upstream.lastReq.Header.Get("X-Sub2-Excel-Access-Token"))
 					require.Equal(t, "chatgpt-acc", fixture.upstream.lastReq.Header.Get("X-Sub2-Excel-Account-Id"))
 					require.Empty(t, fixture.upstream.lastProxyURL)
 				} else {
@@ -129,6 +130,7 @@ func TestExcelAdminAmbiguityAndUnavailableNeverSendNative(t *testing.T) {
 		t.Run(reason, func(t *testing.T) {
 			cfg := excelTestConfig(t)
 			f := newAstraOAuthSetup(t, false)
+			excelAttachBPS(f.account)
 			f.account.GroupIDs = []int64{4, 9}
 			repo := &intelligentRunnerRepo{account: f.account}
 			svc := &AccountTestService{accountRepo: repo, httpUpstream: f.upstream, cfg: f.svc.cfg}
@@ -161,6 +163,7 @@ func TestExcelAdminPrivateFailureDoesNotPoisonAccount(t *testing.T) {
 		t.Run(fmtTestRouteName(intelligent, 9), func(t *testing.T) {
 			excelTestConfig(t)
 			f := newAstraOAuthSetup(t, false)
+			excelAttachBPS(f.account)
 			f.account.GroupIDs = []int64{9}
 			f.upstream.resp = &http.Response{StatusCode: 401, Header: http.Header{"X-Sub2-Excel-Failure": []string{"transport"}}, Body: io.NopCloser(strings.NewReader("private endpoint denied"))}
 			repo := &intelligentRunnerRepo{account: f.account}
@@ -204,6 +207,7 @@ func TestExcelAccountTestCatalogAndDefaults(t *testing.T) {
 func TestExcelTestAndAPIRequestScopesStaySeparate(t *testing.T) {
 	excelTestConfig(t)
 	f := newAstraOAuthSetup(t, false)
+	excelAttachBPS(f.account)
 	f.account.GroupIDs = []int64{9}
 	ctx, _, err := prepareExcelAccountTestContext(context.Background(), f.account, 9, "")
 	require.NoError(t, err)
@@ -232,6 +236,7 @@ func TestExcelTestAndAPIRequestScopesStaySeparate(t *testing.T) {
 func TestExcelDefaultModelUsedByIntelligenceEntrypoint(t *testing.T) {
 	excelTestConfig(t)
 	f := newAstraOAuthSetup(t, false)
+	excelAttachBPS(f.account)
 	f.account.GroupIDs = []int64{9}
 	excelSetResponse(f, "gpt-6-sol")
 	repo := &intelligentRunnerRepo{account: f.account}
@@ -252,6 +257,7 @@ func TestExcelAdminNativeModelPreserved(t *testing.T) {
 			t.Run(fmtTestRouteName(intelligent, group), func(t *testing.T) {
 				excelTestConfig(t)
 				fixture := newAstraOAuthSetup(t, false)
+				excelAttachBPS(fixture.account)
 				fixture.account.GroupIDs = []int64{4, 9}
 				excelSetResponse(fixture, "gpt-5.5")
 				repo := &intelligentRunnerRepo{account: fixture.account}

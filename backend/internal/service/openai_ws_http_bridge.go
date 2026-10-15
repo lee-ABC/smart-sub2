@@ -442,6 +442,16 @@ func (s *OpenAIGatewayService) proxyOpenAIWSHTTPBridgeTurn(
 	if err != nil {
 		return nil, err
 	}
+	// Each bridge turn can select another model. Resolve that turn's profile
+	// rather than reusing the connection's initial BPS/native bearer.
+	if account.Platform == PlatformOpenAI && account.IsOpenAIOAuthLike() {
+		if _, dual := account.Credentials["bps_credentials"]; dual || isExcelRequest(ctx) {
+			token, _, err = s.GetAccessToken(ctx, account)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 	grokIntentSourceBody := append([]byte(nil), body...)
 	_, grokExplicitToolsField := openAIWSHTTPBridgeRawField(grokIntentSourceBody, "tools")
 	grokExplicitToolIntent := account.Platform == PlatformGrok && hasGrokResponsesToolIntent(grokIntentSourceBody)

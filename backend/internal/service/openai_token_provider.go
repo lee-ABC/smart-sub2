@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"math/rand/v2"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -77,6 +78,7 @@ type OpenAITokenCache = GeminiTokenCache
 
 // OpenAITokenProvider manages access_token for OpenAI OAuth accounts.
 type OpenAITokenProvider struct {
+	bpsRefreshLocks    sync.Map
 	accountRepo        AccountRepository
 	tokenCache         OpenAITokenCache
 	openAIOAuthService *OpenAIOAuthService
@@ -140,13 +142,23 @@ func (p *OpenAITokenProvider) GetAccessToken(ctx context.Context, account *Accou
 		return "", errors.New("not an openai oauth account")
 	}
 
+	if err := NativeOAuthCredentialError(account); err != nil {
+		return "", err
+	}
+
 	cacheKey := OpenAITokenCacheKey(account)
 
 	// 1) Try cache first.
 	if p.tokenCache != nil {
 		if token, err := p.tokenCache.GetAccessToken(ctx, cacheKey); err == nil && strings.TrimSpace(token) != "" {
-			slog.Debug("openai_token_cache_hit", "account_id", account.ID)
-			return token, nil
+			if _, bpsErr := ParseBPSCredentialClaims(token); bpsErr == nil {
+				// A previous misconfigured deployment may have cached BPS AT in
+				// the native namespace. Never leak it through a repaired account.
+				_ = p.tokenCache.DeleteAccessToken(ctx, cacheKey)
+			} else {
+				slog.Debug("openai_token_cache_hit", "account_id", account.ID)
+				return token, nil
+			}
 		} else if err != nil {
 			slog.Warn("openai_token_cache_get_failed", "account_id", account.ID, "error", err)
 		}

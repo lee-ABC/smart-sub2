@@ -186,3 +186,8 @@ verification/
 /tools/archive-mode1-local.py
 /tools/verify-state292-runtime.sh
 /deploy/Caddyfile.juhe.pub
+
+# Public BPS integration documentation and pinned redistributable TLS runtime.
+!docs/BPS_INTEGRATION.md
+!/deploy/bps-login/runtime/vendor/
+!/deploy/bps-login/runtime/vendor/tls-client-x64.so

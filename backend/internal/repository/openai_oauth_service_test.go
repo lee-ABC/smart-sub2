@@ -359,3 +359,20 @@ func TestNewOpenAIOAuthClient_DefaultTokenURL(t *testing.T) {
 func TestOpenAIOAuthServiceSuite(t *testing.T) {
 	suite.Run(t, new(OpenAIOAuthServiceSuite))
 }
+
+func TestBPSRefreshUsesOwnClientWithoutCodexScope(t *testing.T) {
+	srv := newLocalTestServer(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, r.ParseForm())
+		require.Equal(t, "refresh_token", r.PostForm.Get("grant_type"))
+		require.Equal(t, service.BPSOAuthClientID, r.PostForm.Get("client_id"))
+		require.Equal(t, "synthetic-bps-rt", r.PostForm.Get("refresh_token"))
+		require.Empty(t, r.PostForm.Get("scope"))
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = io.WriteString(w, `{"access_token":"new-at","refresh_token":"rotated-bps-rt","expires_in":3600}`)
+	}))
+	defer srv.Close()
+	svc := &openaiOAuthService{tokenURL: srv.URL}
+	got, err := svc.RefreshTokenWithClientID(context.Background(), "synthetic-bps-rt", "", service.BPSOAuthClientID)
+	require.NoError(t, err)
+	require.Equal(t, "rotated-bps-rt", got.RefreshToken)
+}

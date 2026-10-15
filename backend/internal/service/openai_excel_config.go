@@ -16,6 +16,9 @@ type ExcelRoutingConfig struct {
 	GatewayURL       string            `json:"gateway_url"`
 	TransportKeyFile string            `json:"transport_key_file"`
 	GroupModes       map[string]string `json:"group_modes"`
+	WebSocketEnabled bool              `json:"websocket_enabled,omitempty"`
+	// CPA implements Responses over HTTP/SSE; downstream WS uses the existing HTTP bridge.
+	TransportBackend string `json:"transport_backend,omitempty"`
 }
 
 var excelConfigMu sync.Mutex
@@ -38,6 +41,9 @@ func ReadExcelRoutingConfig() (*ExcelRoutingConfig, error) {
 	if json.Unmarshal(raw, &cfg) != nil {
 		return nil, errors.New("Invalid Excel routing configuration")
 	}
+	if cfg.TransportBackend != "" && cfg.TransportBackend != "legacy" && cfg.TransportBackend != "cpa" {
+		return nil, errors.New("Invalid Excel transport backend")
+	}
 	for id, mode := range cfg.GroupModes {
 		n, e := strconv.ParseInt(id, 10, 64)
 		if e != nil || n <= 0 || (mode != "native" && mode != "excel") {
@@ -46,6 +52,10 @@ func ReadExcelRoutingConfig() (*ExcelRoutingConfig, error) {
 	}
 	return &cfg, nil
 }
+func (c *ExcelRoutingConfig) UsesCPAAdapter() bool {
+	return c != nil && c.TransportBackend == "cpa"
+}
+
 func (c *ExcelRoutingConfig) Mode(groupID int64) string {
 	if c != nil && c.GroupModes[strconv.FormatInt(groupID, 10)] == "excel" {
 		return "excel"

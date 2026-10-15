@@ -1,0 +1,40 @@
+package basispoints
+
+// Runs ONLY in the h22-live tree, next to zz_h25_s3_fixtures_test.go copied
+// unchanged: records h22's own outputs for the H25 S3 scenarios. Output path
+// from S3_GOLDEN_OUT.
+
+import (
+	"encoding/json"
+	"os"
+	"testing"
+)
+
+type s3Golden struct {
+	Generator string                    `json:"generator"`
+	Scenarios map[string][]s3TurnResult `json:"scenarios"`
+}
+
+func TestGenerateS3Golden(t *testing.T) {
+	out := os.Getenv("S3_GOLDEN_OUT")
+	if out == "" {
+		t.Skip("S3_GOLDEN_OUT not set")
+	}
+	golden := s3Golden{Generator: "h22-live " + Version, Scenarios: map[string][]s3TurnResult{}}
+	turns := 0
+	for _, scenario := range s3Scenarios() {
+		if _, exists := golden.Scenarios[scenario.Name]; exists {
+			t.Fatalf("duplicate scenario %s", scenario.Name)
+		}
+		golden.Scenarios[scenario.Name] = s3RunScenario(t, scenario, nil)
+		turns += len(scenario.Turns)
+	}
+	data, err := json.MarshalIndent(golden, "", " ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(out, append(data, '\n'), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("scenarios=%d turns=%d", len(golden.Scenarios), turns)
+}

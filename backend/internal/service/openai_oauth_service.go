@@ -249,7 +249,10 @@ func (s *OpenAIOAuthService) RefreshTokenWithClientID(ctx context.Context, refre
 		tokenInfo.PlanType = userInfo.PlanType
 	}
 
-	s.enrichTokenInfo(ctx, tokenInfo, proxyURL)
+	// BPS refresh is profile-local: never run native account/privacy probes.
+	if clientID != BPSOAuthClientID {
+		s.enrichTokenInfo(ctx, tokenInfo, proxyURL)
+	}
 
 	return tokenInfo, nil
 }

@@ -433,6 +433,9 @@ func buildAccountForCreate(input *CreateAccountInput, accountExtra map[string]an
 		Status:      StatusActive,
 		Schedulable: true,
 	}
+	if err := ValidateStoredOpenAIProfiles(account); err != nil {
+		return nil, err
+	}
 	if input.ProbeEnabled != nil && *input.ProbeEnabled {
 		if !isUpstreamBillingProbeAccount(account) {
 			return nil, ErrUpstreamBillingProbeAccountInvalid
@@ -578,6 +581,9 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
 	if err != nil {
 		return nil, err
 	}
+	if input.BPSProfileOnly {
+		return s.updateBPSProfile(ctx, account, input.Credentials)
+	}
 	if !ProtectionManagedWrite(ctx) && ProtectedProxyModeConflict(account, input.Extra) {
 		return nil, ErrProtectedProxyModeChange
 	}
@@ -661,6 +667,11 @@ func (s *adminServiceImpl) UpdateAccount(ctx context.Context, id int64, input *U
 		}
 		// Strip SSO/password residue that must never sit next to OAuth tokens.
 		account.Credentials = SanitizeStoredCredentials(account.Platform, account.Credentials)
+		if _, hasAT := input.Credentials["access_token"]; hasAT {
+			if err := ValidateStoredOpenAIProfiles(account); err != nil {
+				return nil, err
+			}
+		}
 	}
 	// Extra 使用 map：需要区分“未提供(nil)”与“显式清空({})”。
 	// 关闭配额限制时前端会删除 quota_* 键并提交 extra:{}，此时也必须落库。

@@ -796,7 +796,18 @@ func (s *AccountTestService) testOpenAIAccountConnection(c *gin.Context, account
 		isOAuth = true
 		// Agent Identity signs each request and does not retain the OAuth token.
 		if !credentialAccount.IsOpenAIAgentIdentity() {
-			authToken = credentialAccount.GetOpenAIAccessToken()
+			if isExcelRequest(ctx) {
+				var credentialErr error
+				authToken, credentialErr = bpsProfileToken(credentialAccount)
+				if credentialErr != nil {
+					return s.sendErrorAndEnd(c, "BPS credentials are unavailable; import a valid BPS credential file")
+				}
+			} else {
+				if credentialErr := NativeOAuthCredentialError(credentialAccount); credentialErr != nil {
+					return s.sendErrorAndEnd(c, "Native credentials are unavailable; import the native credential file")
+				}
+				authToken = credentialAccount.GetOpenAIAccessToken()
+			}
 		}
 		if authToken == "" && !credentialAccount.IsOpenAIAgentIdentity() {
 			return s.sendErrorAndEnd(c, "No access token available")

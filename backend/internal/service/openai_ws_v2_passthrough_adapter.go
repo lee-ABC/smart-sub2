@@ -815,7 +815,14 @@ func (s *OpenAIGatewayService) proxyResponsesWebSocketV2Passthrough(
 	usageMeta.captureRequestedReasoningEffort(originalFirstClientMessage, capturedSessionModel)
 	_, initialUpstreamModel := usageMeta.turnModels(initialRequestModel)
 	SetOpsUpstreamModel(c, initialUpstreamModel)
-	wsURL, err := s.buildOpenAIResponsesWSURL(account)
+	if isExcelWebSocket(ctx) {
+		var prepErr error
+		firstClientMessage, prepErr = s.prepareExcelWebSocketPayload(ctx, c, account, token, firstClientMessage)
+		if prepErr != nil {
+			return prepErr
+		}
+	}
+	wsURL, err := s.buildOpenAIResponsesWSURLForContext(ctx, account)
 	if err != nil {
 		return fmt.Errorf("build ws url: %w", err)
 	}
@@ -1143,6 +1150,9 @@ func (s *OpenAIGatewayService) proxyResponsesWebSocketV2Passthrough(
 				responseCreateAtCopy := responseCreateAt
 				acceptedTurnStartedAt.Store(&responseCreateAtCopy)
 				acceptedTurn = true
+			}
+			if policyErr == nil && blocked == nil && isResponseCreate && isExcelWebSocket(ctx) {
+				out, policyErr = s.prepareExcelWebSocketPayload(ctx, c, account, token, out)
 			}
 			return out, blocked, policyErr
 		},

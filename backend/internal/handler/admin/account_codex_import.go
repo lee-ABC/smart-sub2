@@ -86,6 +86,8 @@ type codexImportAccount struct {
 	AgentTaskID     string
 	AgentFedRAMP    bool
 	IsAgentIdentity bool
+	IsBPS           bool
+	ClientID        string
 	Credentials     map[string]any
 	Extra           map[string]any
 	TokenExpiresAt  *time.Time
@@ -94,6 +96,7 @@ type codexImportAccount struct {
 }
 
 type codexJWTClaims struct {
+	ClientID   string                `json:"client_id"`
 	Sub        string                `json:"sub"`
 	Email      string                `json:"email"`
 	Exp        int64                 `json:"exp"`
@@ -111,6 +114,7 @@ type codexJWTOpenAIClaims struct {
 }
 
 type codexAccountIndex struct {
+	accountsByID    map[int64]service.Account
 	accountsByKey   map[string][]service.Account
 	keysByAccountID map[int64]map[string]struct{}
 }
@@ -188,7 +192,7 @@ func (h *AccountHandler) importCodexSessions(ctx context.Context, req CodexSessi
 	}
 	skipMixedChannelCheck := req.ConfirmMixedChannelRisk != nil && *req.ConfirmMixedChannelRisk
 
-	seenIdentity := map[string]codexSeenIdentity{}
+	seenProfiles := map[bool]map[string]codexSeenIdentity{false: {}, true: {}}
 	for _, entry := range entries {
 		item, err := normalizeCodexImportEntry(entry)
 		if err != nil {
@@ -222,7 +226,7 @@ func (h *AccountHandler) importCodexSessions(ctx context.Context, req CodexSessi
 			continue
 		}
 		item.WarningTexts = append(item.WarningTexts, expiryWarnings...)
-		if credentialExpiresAt != nil {
+		if credentialExpiresAt != nil && !item.IsBPS {
 			item.Credentials["expires_at"] = credentialExpiresAt.Format(time.RFC3339)
 		}
 		credentials := mergeCodexImportMap(item.Credentials, credentialExtras)
@@ -235,6 +239,7 @@ func (h *AccountHandler) importCodexSessions(ctx context.Context, req CodexSessi
 			})
 		}
 
+		seenIdentity := seenProfiles[item.IsBPS]
 		if duplicateIndex, ok := firstSeenCodexIdentity(seenIdentity, item.IdentityKeys, item.UserID); ok {
 			message := fmt.Sprintf("与第 %d 条导入项重复，已跳过", duplicateIndex)
 			result.Skipped++
@@ -253,7 +258,13 @@ func (h *AccountHandler) importCodexSessions(ctx context.Context, req CodexSessi
 		}
 		markCodexIdentitySeen(seenIdentity, item.IdentityKeys, entry.Index, item.UserID)
 
-		existing, matchedKey := index.Find(item.IdentityKeys, item.UserID)
+		existing, matchedKey, matchErr := index.FindImport(item)
+		if matchErr != nil {
+			result.Failed++
+			result.Items = append(result.Items, CodexSessionImportItem{Index: entry.Index, Name: accountName, Action: "failed", Message: matchErr.Error()})
+			result.Errors = append(result.Errors, CodexSessionImportMessage{Index: entry.Index, Name: accountName, Message: matchErr.Error()})
+			continue
+		}
 		if existing != nil && updateExisting {
 			if strings.HasPrefix(matchedKey, "account:") && item.UserID != "" &&
 				codexCredentialString(existing.Credentials, "chatgpt_user_id") == "" {
@@ -263,7 +274,7 @@ func (h *AccountHandler) importCodexSessions(ctx context.Context, req CodexSessi
 					Message: "已有账号未记录 chatgpt_user_id，已按共享的 chatgpt_account_id 匹配并回填，请确认两者属于同一用户",
 				})
 			}
-			preserveExistingRefresh := item.RefreshToken == "" &&
+			preserveExistingRefresh := !item.IsBPS && item.RefreshToken == "" &&
 				codexCredentialString(existing.Credentials, "refresh_token") != ""
 			if preserveExistingRefresh {
 				result.Warnings = append(result.Warnings, CodexSessionImportMessage{
@@ -293,6 +304,16 @@ func (h *AccountHandler) importCodexSessions(ctx context.Context, req CodexSessi
 				groupIDs := append([]int64(nil), req.GroupIDs...)
 				updateInput.GroupIDs = &groupIDs
 				updateInput.SkipMixedChannelCheck = skipMixedChannelCheck
+			}
+			if item.IsBPS {
+				// A BPS attachment changes only its complete credential slot.
+				updateInput = &service.UpdateAccountInput{BPSProfileOnly: true, Credentials: map[string]any{
+					service.BPSCredentialKey: item.Credentials[service.BPSCredentialKey],
+				}}
+			} else if _, hasBPS := existing.Credentials[service.BPSCredentialKey]; hasBPS {
+				// Importing native credentials into a dual/BPS-only account must
+				// not reset its group, priority, expiry or other business settings.
+				updateInput = &service.UpdateAccountInput{Credentials: mergedCredentials}
 			}
 			updated, updateErr := h.adminService.UpdateAccount(ctx, existing.ID, updateInput)
 			if updateErr != nil {
@@ -502,7 +523,12 @@ func normalizeCodexImportEntry(entry codexImportEntry) (*codexImportAccount, err
 	case string:
 		item.AccessToken = strings.TrimSpace(raw)
 	case map[string]any:
+		item.IsBPS = strings.EqualFold(firstCodexString(raw, []string{"type"}, []string{"provider"}), "oai-basispoints")
+		item.ClientID = firstCodexString(raw, []string{"client_id"}, []string{"clientId"}, []string{"tokens", "client_id"})
 		if agentIdentity, ok := firstCodexMap(raw, []string{"agent_identity"}, []string{"agentIdentity"}); ok || strings.EqualFold(firstCodexString(raw, []string{"auth_mode"}, []string{"authMode"}), service.OpenAIAuthModeAgentIdentity) {
+			if item.IsBPS {
+				return nil, errors.New("BPS 凭据不能使用 agent identity 格式")
+			}
 			if !ok {
 				agentIdentity = raw
 			}
@@ -624,6 +650,15 @@ func normalizeCodexImportEntry(entry codexImportEntry) (*codexImportAccount, err
 	if item.AccessToken == "" {
 		return nil, errors.New("缺少 accessToken/access_token")
 	}
+	if claims, err := decodeCodexJWTClaims(item.AccessToken); err == nil && claims.ClientID == service.BPSOAuthClientID {
+		item.IsBPS = true
+	}
+	if item.IsBPS {
+		return normalizeBPSImportAccount(item, entry.Index, now)
+	}
+	if item.ClientID == service.BPSOAuthClientID {
+		return nil, errors.New("BPS client_id 与 access_token 不一致")
+	}
 	item.Credentials["access_token"] = item.AccessToken
 	if item.RefreshToken != "" {
 		item.Credentials["refresh_token"] = item.RefreshToken
@@ -655,6 +690,145 @@ func normalizeCodexImportEntry(entry codexImportEntry) (*codexImportAccount, err
 	item.Name = buildCodexImportAccountName(item, entry.Index)
 
 	return item, nil
+}
+
+// normalizeBPSImportAccount never projects the BPS AT/RT into native fields.
+// Explicit identity in the file must agree with its access-token claims.
+func normalizeBPSImportAccount(item *codexImportAccount, index int, now time.Time) (*codexImportAccount, error) {
+	claims, err := service.ParseBPSCredentialClaims(item.AccessToken)
+	if err != nil {
+		return nil, errors.New("BPS access_token 的 client_id 或用户/工作区身份无效")
+	}
+	if item.ClientID != "" && item.ClientID != service.BPSOAuthClientID {
+		return nil, errors.New("BPS client_id 与 access_token 不一致")
+	}
+	if (item.AccountID != "" && item.AccountID != claims.Auth.AccountID) ||
+		(item.UserID != "" && item.UserID != claims.Auth.UserID) {
+		return nil, errors.New("BPS 文件中的用户/工作区与 access_token 不一致")
+	}
+	if now.Unix() > claims.ExpiresAt+codexImportClockSkewSeconds {
+		return nil, errors.New("BPS access_token 已过期")
+	}
+	if item.IDToken != "" {
+		idClaims, err := decodeCodexJWTClaims(item.IDToken)
+		if err != nil || (idClaims.Sub != "" && idClaims.Sub != claims.Subject) {
+			return nil, errors.New("BPS id_token 与 access_token 身份不一致")
+		}
+		if auth := idClaims.OpenAIAuth; auth != nil {
+			user := auth.ChatGPTUserID
+			if user == "" {
+				user = auth.UserID
+			}
+			if (user != "" && user != claims.Auth.UserID) || (auth.ChatGPTAccountID != "" && auth.ChatGPTAccountID != claims.Auth.AccountID) {
+				return nil, errors.New("BPS id_token 与 access_token 身份不一致")
+			}
+		}
+	}
+	item.AccountID, item.UserID = claims.Auth.AccountID, claims.Auth.UserID
+	item.PlanType = claims.Auth.Plan
+	expires := time.Unix(claims.ExpiresAt, 0).UTC()
+	item.TokenExpiresAt = &expires
+	profile := map[string]any{
+		"access_token": item.AccessToken, "client_id": service.BPSOAuthClientID,
+		"chatgpt_account_id": item.AccountID, "chatgpt_user_id": item.UserID,
+		"expires_at": expires.Format(time.RFC3339),
+	}
+	setCodexCredentialIfNotEmpty(profile, "refresh_token", item.RefreshToken)
+	setCodexCredentialIfNotEmpty(profile, "id_token", item.IDToken)
+	setCodexCredentialIfNotEmpty(profile, "email", item.Email)
+	setCodexCredentialIfNotEmpty(profile, "plan_type", item.PlanType)
+	item.Credentials = map[string]any{
+		service.BPSCredentialKey: profile,
+		"chatgpt_account_id":     item.AccountID, "chatgpt_user_id": item.UserID,
+	}
+	setCodexCredentialIfNotEmpty(item.Credentials, "email", item.Email)
+	setCodexCredentialIfNotEmpty(item.Credentials, "plan_type", item.PlanType)
+	item.Extra["import_source"] = "oai-basispoints"
+	item.IdentityKeys = []string{"bps:" + codexTokenFingerprint(claims.Subject+"\x00"+item.UserID+"\x00"+item.AccountID)}
+	item.Name = buildCodexImportAccountName(item, index)
+	item.WarningTexts = append(item.WarningTexts, "BPS 凭据独立保存；未导入原生凭据时，原生通道不可用")
+	if item.RefreshToken == "" {
+		item.WarningTexts = append(item.WarningTexts, "BPS 未包含 refresh_token，不会借用原生 refresh_token")
+	}
+	return item, nil
+}
+
+// codexProvenIdentity is only used for cross-profile joins, not authentication.
+// It deliberately refuses email, workspace-only and user-only fallbacks.
+func codexProvenIdentity(token string) (workspace, user, subject string, ok bool) {
+	claims, err := decodeCodexJWTClaims(token)
+	if err != nil || claims.OpenAIAuth == nil {
+		return "", "", "", false
+	}
+	workspace, user, subject = strings.TrimSpace(claims.OpenAIAuth.ChatGPTAccountID), strings.TrimSpace(claims.OpenAIAuth.ChatGPTUserID), strings.TrimSpace(claims.Sub)
+	if user == "" {
+		user = strings.TrimSpace(claims.OpenAIAuth.UserID)
+	}
+	return workspace, user, subject, workspace != "" && user != "" && subject != ""
+}
+
+func codexAccountProvenIdentity(account service.Account) (workspace, user, subject string, ok bool) {
+	token := codexCredentialString(account.Credentials, "access_token")
+	if profile, exists := account.Credentials[service.BPSCredentialKey]; exists {
+		if _, err := service.BPSCredentialsForAccount(&account); err != nil {
+			return "", "", "", false
+		}
+		if token == "" {
+			if mapped, valid := profile.(map[string]any); valid {
+				token = codexCredentialString(mapped, "access_token")
+			}
+		}
+	}
+	workspace, user, subject, ok = codexProvenIdentity(token)
+	if got := codexCredentialString(account.Credentials, "chatgpt_account_id"); got != "" && got != workspace {
+		ok = false
+	}
+	if got := codexCredentialString(account.Credentials, "chatgpt_user_id"); got != "" && got != user {
+		ok = false
+	}
+	return
+}
+
+func (i *codexAccountIndex) FindImport(item *codexImportAccount) (*service.Account, string, error) {
+	workspace, user, subject, proven := codexProvenIdentity(item.AccessToken)
+	consistent := proven && workspace == item.AccountID && user == item.UserID
+	var matches []service.Account
+	hasBPSMatch := false
+	for _, account := range i.accountsByID {
+		w, u, s, ok := codexAccountProvenIdentity(account)
+		if !ok || !consistent || w != workspace || u != user || s != subject {
+			continue
+		}
+		matches = append(matches, account)
+		if _, present := account.Credentials[service.BPSCredentialKey]; present {
+			hasBPSMatch = true
+		}
+	}
+	if item.IsBPS || hasBPSMatch {
+		if !consistent {
+			return nil, "", errors.New("关联双凭据需要 JWT 中一致的用户和工作区身份")
+		}
+		if len(matches) > 1 {
+			return nil, "", errors.New("同一用户和工作区存在多个账号，无法唯一关联 BPS 凭据")
+		}
+		if len(matches) == 1 {
+			return &matches[0], "profile_identity", nil
+		}
+		return nil, "", nil
+	}
+	// Legacy native-only imports retain their established matching behavior;
+	// a BPS account can only be reached through the strict join above.
+	for _, key := range item.IdentityKeys {
+		for _, account := range i.accountsByKey[key] {
+			if _, dual := account.Credentials[service.BPSCredentialKey]; dual {
+				continue
+			}
+			if !codexIdentityConflicts(key, item.UserID, codexCredentialString(account.Credentials, "chatgpt_user_id")) {
+				return &account, key, nil
+			}
+		}
+	}
+	return nil, "", nil
 }
 
 func enrichCodexImportAccountFromJWT(item *codexImportAccount, token string, validateExpiry bool, now time.Time) error {
@@ -865,6 +1039,7 @@ func sanitizeCodexImportCredentialExtras(input map[string]any) map[string]any {
 		"agent_runtime_id":           {},
 		"agent_private_key":          {},
 		"task_id":                    {},
+		service.BPSCredentialKey:     {},
 	}
 	out := make(map[string]any, len(input))
 	for key, value := range input {
@@ -934,6 +1109,7 @@ func buildCodexStoredIdentityKeys(accountID, userID, email, accessToken string) 
 
 func buildCodexAccountIndex(accounts []service.Account) *codexAccountIndex {
 	index := &codexAccountIndex{
+		accountsByID:    map[int64]service.Account{},
 		accountsByKey:   map[string][]service.Account{},
 		keysByAccountID: map[int64]map[string]struct{}{},
 	}
@@ -947,6 +1123,10 @@ func (i *codexAccountIndex) Add(account service.Account) {
 	if i == nil {
 		return
 	}
+	if i.accountsByID == nil {
+		i.accountsByID = map[int64]service.Account{}
+	}
+	i.accountsByID[account.ID] = account
 	if i.accountsByKey == nil {
 		i.accountsByKey = map[string][]service.Account{}
 	}
@@ -1091,6 +1271,11 @@ func mergeCodexImportMap(existing, incoming map[string]any) map[string]any {
 }
 
 func mergeCodexImportCredentials(existing, incoming map[string]any, item *codexImportAccount) map[string]any {
+	if item != nil && item.IsBPS {
+		out := mergeCodexImportMap(existing, nil)
+		out[service.BPSCredentialKey] = incoming[service.BPSCredentialKey]
+		return out
+	}
 	out := mergeCodexImportMap(existing, incoming)
 	if item == nil {
 		return out

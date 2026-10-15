@@ -3496,6 +3496,8 @@
         :show-session-token-option="false"
         :show-access-token-option="false"
         :show-codex-session-import-option="form.platform === 'openai'"
+        :show-bps-login-option="form.platform === 'openai'"
+        :proxy-id="randomProxyEnabled ? null : form.proxy_id"
         :show-agent-identity-option="form.platform === 'openai'"
         :show-codex-pat-option="form.platform === 'openai'"
         :show-sso-option="form.platform === 'grok'"
@@ -3510,6 +3512,7 @@
         @validate-mobile-refresh-token="handleOpenAIValidateMobileRT"
         @validate-session-token="handleValidateSessionToken"
         @import-codex-session="handleOpenAIImportCodexSession"
+        @confirm-bps-login="handleOpenAIImportBpsLogin"
         @import-codex-pat="handleOpenAIImportCodexPAT"
         @import-sso="handleGrokImportSSO"
         @authorize-password="handleGrokAuthorizePassword"
@@ -3830,7 +3833,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
+import { ref, reactive, computed, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 
@@ -3917,6 +3920,7 @@ import {
   type OpenAIWSMode
 } from '@/utils/openaiWsMode'
 import OAuthAuthorizationFlow from './OAuthAuthorizationFlow.vue'
+import { safeBpsLoginCode } from '@/utils/bpsLogin'
 
 // Type for exposed OAuthAuthorizationFlow component
 // Note: defineExpose automatically unwraps refs, so we use the unwrapped types
@@ -6405,6 +6409,87 @@ const handleOpenAIImportCodexSession = async (content: string) => {
     oauthClient.loading.value = false
   }
 }
+
+let bpsImportGeneration = 0
+watch([() => props.show, () => form.platform, step], () => { bpsImportGeneration++ }, { flush: 'sync' })
+onBeforeUnmount(() => { bpsImportGeneration++ })
+
+const handleOpenAIImportBpsLogin = async (jobId: string) => {
+  const oauthClient = openaiOAuth
+  if (oauthClient.loading.value || form.platform !== 'openai' || !jobId) return
+  const credentialExtras = buildOpenAICodexImportCredentialExtras()
+  if (credentialExtras === null) {
+    return
+  }
+
+  const expectedGeneration = ++bpsImportGeneration
+  oauthClient.loading.value = true
+  oauthClient.error.value = ''
+
+  try {
+    const extra = buildOpenAICodexImportExtra()
+    const result = await adminAPI.accounts.importBpsLogin(jobId, withProxySelection({
+      name: form.name,
+      notes: form.notes || null,
+      proxy_id: form.proxy_id,
+      concurrency: form.concurrency,
+      load_factor: form.load_factor ?? undefined,
+      priority: form.priority,
+      rate_multiplier: form.rate_multiplier,
+      group_ids: form.group_ids,
+      expires_at: form.expires_at,
+      auto_pause_on_expired: autoPauseOnExpired.value,
+      credential_extras: Object.keys(credentialExtras).length > 0 ? credentialExtras : undefined,
+      extra: withUpstreamRequestIdHeader(extra),
+      update_existing: true
+    }))
+
+    if (expectedGeneration !== bpsImportGeneration || !props.show) return
+    const successCount = result.created + result.updated
+    const params = {
+      created: result.created,
+      updated: result.updated,
+      skipped: result.skipped,
+      failed: result.failed
+    }
+
+    if (successCount > 0 && result.failed === 0) {
+      appStore.showSuccess(t('admin.accounts.oauth.openai.codexSessionImportSuccess', params))
+      emit('created')
+      handleClose()
+      return
+    }
+
+    const errorText = formatCodexImportMessages(result.errors)
+    const warningText = formatCodexImportMessages(result.warnings)
+    oauthClient.error.value = [errorText, warningText].filter(Boolean).join('\n')
+
+    if (result.failed === 0) {
+      appStore.showWarning(t('admin.accounts.oauth.openai.codexSessionImportSuccess', params))
+      return
+    }
+
+    if (successCount > 0) {
+      appStore.showWarning(t('admin.accounts.oauth.openai.codexSessionImportPartial', params))
+      emit('created')
+      return
+    }
+
+    appStore.showError(t('admin.accounts.oauth.openai.codexSessionImportFailed'))
+  } catch (error: any) {
+    if (expectedGeneration !== bpsImportGeneration || !props.show) return
+    const code = error.response?.data?.reason || error.response?.data?.code || error.code
+    const safeCode = safeBpsLoginCode(code, 'BPS_IMPORT_FAILED')
+    oauthClient.error.value = `${t('admin.accounts.oauth.openai.bpsLoginFailed')}: ${safeCode}`
+    appStore.showError(oauthClient.error.value)
+  } finally {
+    if (expectedGeneration === bpsImportGeneration) oauthClient.loading.value = false
+    // The component must not cancel a task while its explicit import is in flight.
+    // If the dialog closed meanwhile, release any failed/unconsumed task now.
+    if (expectedGeneration !== bpsImportGeneration || !props.show) void adminAPI.accounts.cancelBpsLogin(jobId).catch(() => {})
+  }
+}
+
 
 const handleOpenAIImportCodexPAT = async (accessToken: string) => {
   const oauthClient = openaiOAuth

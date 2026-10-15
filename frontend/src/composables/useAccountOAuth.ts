@@ -11,6 +11,7 @@ export type AuthInputMethod =
   | 'session_token'
   | 'access_token'
   | 'codex_session'
+  | 'bps_login'
   | 'agent_identity'
   | 'codex_pat'
   | 'sso_cookie'

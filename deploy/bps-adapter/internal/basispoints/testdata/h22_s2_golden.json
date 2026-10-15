@@ -1,0 +1,564 @@
+{
+ "generator": "h22-live 0.1.2-h22",
+ "prompts": {
+  "e2_search_only": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"call_id\":\"s2_search\",\"execution\":\"client\",\"status\":\"completed\",\"tools\":[{\"name\":\"mcp_docs\",\"tools\":[{\"name\":\"lookup\",\"parameters\":{\"properties\":{},\"type\":\"object\"},\"type\":\"function\"},{\"name\":\"fetch\",\"parameters\":{\"properties\":{},\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"namespace\"}],\"type\":\"tool_search_output\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"920701ba-dada-534b-ab83-556d030eaf3f\",\"turn_id\":\"4610c261-bba3-547a-8b50-d19ad0a09213\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"No workbook tools are available for this request. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"call_id\":\"s2_search\",\"execution\":\"client\",\"status\":\"completed\",\"tools\":[{\"name\":\"mcp_docs\",\"tools\":[{\"name\":\"lookup\",\"parameters\":{\"properties\":{},\"type\":\"object\"},\"type\":\"function\"},{\"name\":\"fetch\",\"parameters\":{\"properties\":{},\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"namespace\"}],\"type\":\"tool_search_output\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"920701ba-dada-534b-ab83-556d030eaf3f\",\"turn_id\":\"4610c261-bba3-547a-8b50-d19ad0a09213\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text.",
+   "plain_instructions": "No workbook tools are available for this request. Return the answer as assistant text."
+  },
+  "e2_search_only_allowed": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"call_id\":\"s2_search\",\"execution\":\"client\",\"status\":\"completed\",\"tools\":[{\"name\":\"mcp_docs\",\"tools\":[{\"name\":\"lookup\",\"parameters\":{\"properties\":{},\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"namespace\"}],\"type\":\"tool_search_output\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"ad106ce9-fa68-5888-8be1-315320e69768\",\"turn_id\":\"3faf6685-6c45-5e15-8f1e-4cde525ad618\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"No workbook tools are available for this request. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"call_id\":\"s2_search\",\"execution\":\"client\",\"status\":\"completed\",\"tools\":[{\"name\":\"mcp_docs\",\"tools\":[{\"name\":\"lookup\",\"parameters\":{\"properties\":{},\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"namespace\"}],\"type\":\"tool_search_output\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"ad106ce9-fa68-5888-8be1-315320e69768\",\"turn_id\":\"3faf6685-6c45-5e15-8f1e-4cde525ad618\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text.",
+   "plain_instructions": "No workbook tools are available for this request. Return the answer as assistant text."
+  },
+  "e2_search_only_flat": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"call_id\":\"s2_flat\",\"execution\":\"client\",\"status\":\"completed\",\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"tool_search_output\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"5608c9a7-b8cc-5ea4-9528-eb3bbe9817f1\",\"turn_id\":\"ff8832e0-393e-5193-8052-6f87f0b93dd9\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"No workbook tools are available for this request. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"call_id\":\"s2_flat\",\"execution\":\"client\",\"status\":\"completed\",\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"tool_search_output\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"5608c9a7-b8cc-5ea4-9528-eb3bbe9817f1\",\"turn_id\":\"ff8832e0-393e-5193-8052-6f87f0b93dd9\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text.",
+   "plain_instructions": "No workbook tools are available for this request. Return the answer as assistant text."
+  },
+  "lite_additional": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"72e39259-942a-5c1a-87c0-9d2b4b70600c\",\"turn_id\":\"3e7723fa-01b7-59df-a2e2-4da2e9419994\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"72e39259-942a-5c1a-87c0-9d2b4b70600c\",\"turn_id\":\"3e7723fa-01b7-59df-a2e2-4da2e9419994\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs.",
+   "plain_instructions": "The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs."
+  },
+  "lite_additional_empty": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"f482cfea-f948-5cd8-b66e-585981781eb2\",\"turn_id\":\"4937f793-7559-579f-88d1-724b7c4d6da4\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"No workbook tools are available for this request. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"f482cfea-f948-5cd8-b66e-585981781eb2\",\"turn_id\":\"4937f793-7559-579f-88d1-724b7c4d6da4\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text.",
+   "plain_instructions": "No workbook tools are available for this request. Return the answer as assistant text."
+  },
+  "lite_additional_history": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"name\":\"workspace\",\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"},{\"description\":\"Apply a patch.\",\"name\":\"apply_patch\",\"type\":\"custom\"}],\"type\":\"namespace\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"},{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"s2_hist\",\"id\":\"fc_s2_hist\",\"name\":\"get_weather\",\"namespace\":\"workspace\",\"type\":\"function_call\"},{\"call_id\":\"s2_hist\",\"output\":\"sunny\",\"type\":\"function_call_output\"}],\"metadata\":{\"agent_iteration\":\"2\",\"task_id\":\"3c988e1e-25d2-5240-b05b-722cd35726b6\",\"turn_id\":\"31a701dd-23c5-53ea-9b0d-d7a13cb1249d\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"name\":\"workspace\",\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"},{\"description\":\"Apply a patch.\",\"name\":\"apply_patch\",\"type\":\"custom\"}],\"type\":\"namespace\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"},{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"s2_hist\",\"id\":\"fc_s2_hist\",\"name\":\"get_weather\",\"namespace\":\"workspace\",\"type\":\"function_call\"},{\"call_id\":\"s2_hist\",\"output\":\"sunny\",\"type\":\"function_call_output\"}],\"metadata\":{\"agent_iteration\":\"2\",\"task_id\":\"3c988e1e-25d2-5240-b05b-722cd35726b6\",\"turn_id\":\"31a701dd-23c5-53ea-9b0d-d7a13cb1249d\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs.",
+   "plain_instructions": "The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs."
+  },
+  "lite_additional_namespace": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"name\":\"workspace\",\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"},{\"description\":\"Apply a patch.\",\"name\":\"apply_patch\",\"type\":\"custom\"}],\"type\":\"namespace\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"3c988e1e-25d2-5240-b05b-722cd35726b6\",\"turn_id\":\"31a701dd-23c5-53ea-9b0d-d7a13cb1249d\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"name\":\"workspace\",\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"},{\"description\":\"Apply a patch.\",\"name\":\"apply_patch\",\"type\":\"custom\"}],\"type\":\"namespace\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"3c988e1e-25d2-5240-b05b-722cd35726b6\",\"turn_id\":\"31a701dd-23c5-53ea-9b0d-d7a13cb1249d\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs.",
+   "plain_instructions": "The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs."
+  },
+  "lite_choice_allowed_none": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"72e39259-942a-5c1a-87c0-9d2b4b70600c\",\"turn_id\":\"3e7723fa-01b7-59df-a2e2-4da2e9419994\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"72e39259-942a-5c1a-87c0-9d2b4b70600c\",\"turn_id\":\"3e7723fa-01b7-59df-a2e2-4da2e9419994\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs.",
+   "plain_instructions": "The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs."
+  },
+  "lite_choice_none": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"72e39259-942a-5c1a-87c0-9d2b4b70600c\",\"turn_id\":\"3e7723fa-01b7-59df-a2e2-4da2e9419994\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"No workbook tools are available for this request. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"72e39259-942a-5c1a-87c0-9d2b4b70600c\",\"turn_id\":\"3e7723fa-01b7-59df-a2e2-4da2e9419994\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text.",
+   "plain_instructions": "No workbook tools are available for this request. Return the answer as assistant text."
+  },
+  "lite_instructions_cache_key": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"Be brief.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"8949e248-4309-5ea2-a910-1501888b652f\",\"turn_id\":\"1cb6babc-28d6-53eb-9515-b6d946313966\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"prompt_cache_key\":\"s2-lite-cache-key\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"Be brief.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"content\":[{\"text\":\"The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"8949e248-4309-5ea2-a910-1501888b652f\",\"turn_id\":\"1cb6babc-28d6-53eb-9515-b6d946313966\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"prompt_cache_key\":\"s2-lite-cache-key\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs.",
+   "plain_instructions": "The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs."
+  },
+  "lite_parallel_false_required": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"72e39259-942a-5c1a-87c0-9d2b4b70600c\",\"turn_id\":\"3e7723fa-01b7-59df-a2e2-4da2e9419994\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"72e39259-942a-5c1a-87c0-9d2b4b70600c\",\"turn_id\":\"3e7723fa-01b7-59df-a2e2-4da2e9419994\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs.",
+   "plain_instructions": "The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs."
+  },
+  "no_tools": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"2da136af-ada8-5980-a71f-77dca5bc0af8\",\"turn_id\":\"4eda19b7-4821-593b-88af-a60ee0eafe0b\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"No workbook tools are available for this request. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"2da136af-ada8-5980-a71f-77dca5bc0af8\",\"turn_id\":\"4eda19b7-4821-593b-88af-a60ee0eafe0b\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text.",
+   "plain_instructions": "No workbook tools are available for this request. Return the answer as assistant text."
+  },
+  "no_tools_string_input": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"content\":[{\"text\":\"s2 plain\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"de8121b9-311e-5a96-b22c-5ce29047bc42\",\"turn_id\":\"ddfd4d25-1ada-5892-b28f-709127717743\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"No workbook tools are available for this request. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"content\":[{\"text\":\"s2 plain\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"de8121b9-311e-5a96-b22c-5ce29047bc42\",\"turn_id\":\"ddfd4d25-1ada-5892-b28f-709127717743\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text.",
+   "plain_instructions": "No workbook tools are available for this request. Return the answer as assistant text."
+  },
+  "search_only_choice_none": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"call_id\":\"s2_search\",\"execution\":\"client\",\"status\":\"completed\",\"tools\":[{\"name\":\"mcp_docs\",\"tools\":[{\"name\":\"lookup\",\"parameters\":{\"properties\":{},\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"namespace\"}],\"type\":\"tool_search_output\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"ad106ce9-fa68-5888-8be1-315320e69768\",\"turn_id\":\"3faf6685-6c45-5e15-8f1e-4cde525ad618\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"No workbook tools are available for this request. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"call_id\":\"s2_search\",\"execution\":\"client\",\"status\":\"completed\",\"tools\":[{\"name\":\"mcp_docs\",\"tools\":[{\"name\":\"lookup\",\"parameters\":{\"properties\":{},\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"namespace\"}],\"type\":\"tool_search_output\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"ad106ce9-fa68-5888-8be1-315320e69768\",\"turn_id\":\"3faf6685-6c45-5e15-8f1e-4cde525ad618\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text.",
+   "plain_instructions": "No workbook tools are available for this request. Return the answer as assistant text."
+  },
+  "search_only_forced_other": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"call_id\":\"s2_search\",\"execution\":\"client\",\"status\":\"completed\",\"tools\":[{\"name\":\"mcp_docs\",\"tools\":[{\"name\":\"lookup\",\"parameters\":{\"properties\":{},\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"namespace\"}],\"type\":\"tool_search_output\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"ad106ce9-fa68-5888-8be1-315320e69768\",\"turn_id\":\"3faf6685-6c45-5e15-8f1e-4cde525ad618\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"No workbook tools are available for this request. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"call_id\":\"s2_search\",\"execution\":\"client\",\"status\":\"completed\",\"tools\":[{\"name\":\"mcp_docs\",\"tools\":[{\"name\":\"lookup\",\"parameters\":{\"properties\":{},\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"namespace\"}],\"type\":\"tool_search_output\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"ad106ce9-fa68-5888-8be1-315320e69768\",\"turn_id\":\"3faf6685-6c45-5e15-8f1e-4cde525ad618\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text.",
+   "plain_instructions": "No workbook tools are available for this request. Return the answer as assistant text."
+  },
+  "search_plus_additional": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"call_id\":\"s2_search\",\"execution\":\"client\",\"status\":\"completed\",\"tools\":[{\"name\":\"mcp_docs\",\"tools\":[{\"name\":\"lookup\",\"parameters\":{\"properties\":{},\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"namespace\"}],\"type\":\"tool_search_output\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"72e39259-942a-5c1a-87c0-9d2b4b70600c\",\"turn_id\":\"17bdf325-a183-57d1-bfed-8f79b78de675\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"call_id\":\"s2_search\",\"execution\":\"client\",\"status\":\"completed\",\"tools\":[{\"name\":\"mcp_docs\",\"tools\":[{\"name\":\"lookup\",\"parameters\":{\"properties\":{},\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"namespace\"}],\"type\":\"tool_search_output\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"72e39259-942a-5c1a-87c0-9d2b4b70600c\",\"turn_id\":\"17bdf325-a183-57d1-bfed-8f79b78de675\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. The client's own tools are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call server-injected Excel, Office, connector, or workbook tools such as run_officejs.",
+   "plain_instructions": "The tools for this request are declared in the additional_tools input item: use them directly whenever the task needs them, exactly as declared there. Do not call Excel, Office, connector, or workbook tools such as run_officejs."
+  },
+  "top_tools_choice_none": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"2da136af-ada8-5980-a71f-77dca5bc0af8\",\"turn_id\":\"4eda19b7-4821-593b-88af-a60ee0eafe0b\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"No workbook tools are available for this request. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"2da136af-ada8-5980-a71f-77dca5bc0af8\",\"turn_id\":\"4eda19b7-4821-593b-88af-a60ee0eafe0b\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text.",
+   "plain_instructions": "No workbook tools are available for this request. Return the answer as assistant text."
+  },
+  "top_tools_choice_none_additional": {
+   "body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"72e39259-942a-5c1a-87c0-9d2b4b70600c\",\"turn_id\":\"3e7723fa-01b7-59df-a2e2-4da2e9419994\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "plain_body": "{\"context_management\":[{\"compact_threshold\":700000,\"type\":\"compaction\"}],\"input\":[{\"content\":[{\"text\":\"No workbook tools are available for this request. Return the answer as assistant text. Do not use the display name from the authenticated runtime user context: do not greet or address the user by it, and do not put it into anything you write, including messages, files, commit messages, signatures and tool arguments. Use a name or other user details only when the developer instructions or the user in this conversation provide them; those are the correct ones to use. Otherwise say you do not have that information.\",\"type\":\"input_text\"}],\"role\":\"developer\",\"type\":\"message\"},{\"tools\":[{\"description\":\"Get current weather.\",\"name\":\"get_weather\",\"parameters\":{\"properties\":{\"city\":{\"type\":\"string\"}},\"required\":[\"city\"],\"type\":\"object\"},\"type\":\"function\"}],\"type\":\"additional_tools\"},{\"content\":[{\"text\":\"s2 lite\",\"type\":\"input_text\"}],\"role\":\"user\",\"type\":\"message\"}],\"metadata\":{\"agent_iteration\":\"1\",\"task_id\":\"72e39259-942a-5c1a-87c0-9d2b4b70600c\",\"turn_id\":\"3e7723fa-01b7-59df-a2e2-4da2e9419994\"},\"model\":\"gpt-6-astra\",\"model_selection\":\"explicit\",\"reasoning_effort\":\"medium\",\"store\":false,\"stream\":false}",
+   "instructions": "This request is relayed by an external Responses API client, not by the live Excel workbook. Do not call server-injected Excel, Office, connector, or workbook tools. Return the answer as assistant text.",
+   "plain_instructions": "No workbook tools are available for this request. Return the answer as assistant text."
+  }
+ },
+ "streams": {
+  "bare_terminal": {
+   "events": [
+    "response.created\u0000{\"response\":{\"id\":\"resp_s2\",\"output\":[],\"status\":\"in_progress\"},\"type\":\"response.created\"}",
+    "response.completed\u0000{\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "bare_terminal_after_relay": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}"
+   ],
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "completed_status_mismatch": {
+   "events": [
+    "response.created\u0000{\"response\":{\"id\":\"resp_s2\",\"output\":[],\"status\":\"in_progress\"},\"type\":\"response.created\"}",
+    "response.completed\u0000{\"response\":{\"output\":[{\"content\":[{\"text\":\"TEXT AFTER TOOL\",\"type\":\"output_text\"}],\"id\":\"msg_s2\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "e3_equivalent_number": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"n\\\":1e3}\",\"call_id\":\"call_num\",\"id\":\"fc_num\",\"name\":\"lookup\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"n\\\":1e3}\",\"item_id\":\"fc_num\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"n\\\":1e3}\",\"call_id\":\"call_num\",\"id\":\"fc_num\",\"name\":\"lookup\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}"
+   ],
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "e3_scalar_string": {
+   "events": null,
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "e3_terminal_missing_id": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}"
+   ],
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "error_event_only": {
+   "events": [
+    "response.created\u0000{\"response\":{\"id\":\"resp_s2\",\"output\":[],\"status\":\"in_progress\"},\"type\":\"response.created\"}",
+    "error\u0000{\"error\":{\"code\":\"server_error\",\"message\":\"upstream said no\"},\"type\":\"error\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "native_choice_none": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"in_progress\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "native_delta_wrong_id": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"in_progress\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.delta\u0000{\"delta\":\"x\",\"item_id\":\"fc_WRONG\",\"output_index\":0,\"type\":\"response.function_call_arguments.delta\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "native_forced_other": {
+   "events": [
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "native_invalid_json_args": {
+   "events": [
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\",\"call_id\":\"call_native_bad\",\"id\":\"fc_native_bad\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\",\"call_id\":\"call_native_bad\",\"id\":\"fc_native_bad\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "native_lite_call": {
+   "events": [
+    "response.created\u0000{\"response\":{\"id\":\"resp_s2\",\"output\":[],\"status\":\"in_progress\"},\"type\":\"response.created\"}",
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"in_progress\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.delta\u0000{\"delta\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_native\",\"output_index\":0,\"type\":\"response.function_call_arguments.delta\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "native_orphan_delta_wrong_id": {
+   "events": [
+    "response.function_call_arguments.delta\u0000{\"delta\":\"x\",\"item_id\":\"fc_WRONG\",\"output_index\":0,\"type\":\"response.function_call_arguments.delta\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "native_parallel_false_two": {
+   "events": [
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_native_two\",\"id\":\"fc_native_two\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":1,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_native_two\",\"id\":\"fc_native_two\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "native_terminal_changed": {
+   "events": [
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Rome\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "native_terminal_missing": {
+   "events": [
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":null,\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "native_then_relay": {
+   "events": [
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":1,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"item_id\":\"fc_oslo\",\"output_index\":1,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":1,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_native\",\"id\":\"fc_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "reasoning_then_bad": {
+   "events": [
+    "response.reasoning_summary_text.delta\u0000{\"delta\":\"thinking\",\"output_index\":0,\"type\":\"response.reasoning_summary_text.delta\"}"
+   ],
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "relay_added_done_terminal": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_bad_done": {
+   "events": [
+    "response.created\u0000{\"response\":{\"id\":\"resp_s2\",\"output\":[],\"status\":\"in_progress\"},\"type\":\"response.created\"}"
+   ],
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "relay_bad_terminal_only": {
+   "events": [
+    "response.created\u0000{\"response\":{\"id\":\"resp_s2\",\"output\":[],\"status\":\"in_progress\"},\"type\":\"response.created\"}"
+   ],
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "relay_custom": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"call_id\":\"call_alias\",\"id\":\"ctc_alias\",\"input\":\"raw text\",\"name\":\"patch\",\"status\":\"completed\",\"type\":\"custom_tool_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.custom_tool_call_input.done\u0000{\"input\":\"raw text\",\"item_id\":\"ctc_alias\",\"output_index\":0,\"type\":\"response.custom_tool_call_input.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"call_id\":\"call_alias\",\"id\":\"ctc_alias\",\"input\":\"raw text\",\"name\":\"patch\",\"status\":\"completed\",\"type\":\"custom_tool_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"call_id\":\"call_alias\",\"id\":\"ctc_alias\",\"input\":\"raw text\",\"name\":\"patch\",\"status\":\"completed\",\"type\":\"custom_tool_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_custom_alias_id": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"call_id\":\"call_alias\",\"id\":\"ctc_alias\",\"input\":\"raw text\",\"name\":\"patch\",\"status\":\"completed\",\"type\":\"custom_tool_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.custom_tool_call_input.done\u0000{\"input\":\"raw text\",\"item_id\":\"ctc_alias\",\"output_index\":0,\"type\":\"response.custom_tool_call_input.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"call_id\":\"call_alias\",\"id\":\"ctc_alias\",\"input\":\"raw text\",\"name\":\"patch\",\"status\":\"completed\",\"type\":\"custom_tool_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"call_id\":\"call_alias\",\"id\":\"ctc_alias\",\"input\":\"raw text\",\"name\":\"patch\",\"status\":\"completed\",\"type\":\"custom_tool_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_done_eof": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}"
+   ],
+   "close_err": "[upstream_error] Basis Points stream ended without a terminal event"
+  },
+  "relay_done_then_terminal": {
+   "events": [
+    "response.created\u0000{\"response\":{\"id\":\"resp_s2\",\"output\":[],\"status\":\"in_progress\"},\"type\":\"response.created\"}",
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_duplicate_call_id": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}"
+   ],
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "relay_failed_after_delivery_empty": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}"
+   ],
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "relay_failed_after_delivery_same": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.failed\u0000{\"response\":{\"error\":{\"code\":\"server_error\"},\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"failed\"},\"type\":\"response.failed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_failed_terminal_calls": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":1,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"item_id\":\"fc_oslo\",\"output_index\":1,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":1,\"type\":\"response.output_item.done\"}",
+    "response.failed\u0000{\"response\":{\"error\":{\"code\":\"server_error\"},\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"failed\"},\"type\":\"response.failed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_full_lifecycle": {
+   "events": [
+    "response.created\u0000{\"response\":{\"id\":\"resp_2\",\"output\":[],\"status\":\"in_progress\"},\"type\":\"response.created\"}",
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_1\",\"id\":\"fc_1\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_1\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_1\",\"id\":\"fc_1\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_2\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_1\",\"id\":\"fc_1\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_good_then_bad_done": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}"
+   ],
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "relay_held_eof": {
+   "events": [
+    "response.created\u0000{\"response\":{\"id\":\"resp_s2\",\"output\":[],\"status\":\"in_progress\"},\"type\":\"response.created\"}"
+   ],
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "relay_held_sentinel": {
+   "events": null,
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "relay_incomplete_terminal_calls": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.incomplete\u0000{\"response\":{\"incomplete_details\":{\"reason\":\"max_output_tokens\"},\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"incomplete\"},\"type\":\"response.incomplete\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_incomplete_terminal_unfinished": {
+   "events": null,
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "relay_parallel_false_two": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":1,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"item_id\":\"fc_oslo\",\"output_index\":1,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":1,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_terminal_changed": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}"
+   ],
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "relay_terminal_only_two": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":1,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"item_id\":\"fc_oslo\",\"output_index\":1,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":1,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_then_error_event": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "error\u0000{\"error\":{\"code\":\"server_error\",\"message\":\"upstream said no\"},\"type\":\"error\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_then_text": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.output_item.added\u0000{\"item\":{\"content\":[],\"id\":\"msg_s2\",\"role\":\"assistant\",\"status\":\"in_progress\",\"type\":\"message\"},\"output_index\":1,\"type\":\"response.output_item.added\"}",
+    "response.output_item.done\u0000{\"item\":{\"content\":[{\"text\":\"TEXT AFTER TOOL\",\"type\":\"output_text\"}],\"id\":\"msg_s2\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"},\"output_index\":1,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},{\"content\":[{\"text\":\"TEXT AFTER TOOL\",\"type\":\"output_text\"}],\"id\":\"msg_s2\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_two_done": {
+   "events": [
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"item_id\":\"fc_paris\",\"output_index\":0,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":0,\"type\":\"response.output_item.done\"}",
+    "response.output_item.added\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":1,\"type\":\"response.output_item.added\"}",
+    "response.function_call_arguments.done\u0000{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"item_id\":\"fc_oslo\",\"output_index\":1,\"type\":\"response.function_call_arguments.done\"}",
+    "response.output_item.done\u0000{\"item\":{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},\"output_index\":1,\"type\":\"response.output_item.done\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_paris\",\"id\":\"fc_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"call_oslo\",\"id\":\"fc_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "relay_unfinished_done": {
+   "events": null,
+   "close_err": "[request_error] invalid_tool_call: Basis Points could not validate the upstream client tool call"
+  },
+  "required_text_only": {
+   "events": [
+    "response.output_text.delta\u0000{\"content_index\":0,\"delta\":\"hello\",\"item_id\":\"msg_s2\",\"output_index\":0,\"type\":\"response.output_text.delta\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":[{\"content\":[{\"text\":\"TEXT AFTER TOOL\",\"type\":\"output_text\"}],\"id\":\"msg_s2\",\"role\":\"assistant\",\"status\":\"completed\",\"type\":\"message\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "text": {
+   "events": [
+    "response.created\u0000{\"response\":{\"id\":\"resp_1\",\"output\":[],\"status\":\"in_progress\"},\"type\":\"response.created\"}",
+    "response.output_item.added\u0000{\"item\":{\"content\":[],\"id\":\"msg_1\",\"role\":\"assistant\",\"type\":\"message\"},\"output_index\":0,\"type\":\"response.output_item.added\"}",
+    "response.output_text.delta\u0000{\"content_index\":0,\"delta\":\"先说前半句\",\"item_id\":\"msg_1\",\"output_index\":0,\"type\":\"response.output_text.delta\"}",
+    "response.output_text.delta\u0000{\"content_index\":0,\"delta\":\"再说后半句\",\"item_id\":\"msg_1\",\"output_index\":0,\"type\":\"response.output_text.delta\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_1\",\"output\":[{\"content\":[{\"text\":\"先说前半句再说后半句\",\"type\":\"output_text\"}],\"id\":\"msg_1\",\"role\":\"assistant\",\"type\":\"message\"}],\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  },
+  "trailing_junk_event": {
+   "events": [
+    "response.created\u0000{\"response\":{\"id\":\"resp_s2\",\"output\":[],\"status\":\"in_progress\"},\"type\":\"response.created\"}",
+    "response.output_text.delta\u0000{\"delta\":\"x\",\"output_index\":0,\"type\":\"response.output_text.delta\"}",
+    "response.completed\u0000{\"response\":{\"id\":\"resp_h21\",\"output\":null,\"status\":\"completed\"},\"type\":\"response.completed\"}",
+    "[DONE]"
+   ],
+   "close_err": ""
+  }
+ },
+ "transforms": {
+  "completed_bad_relay": {
+   "body": "",
+   "status": 422,
+   "kind": "invalid_tool_call",
+   "message": "Upstream tool call could not be converted to a declared client tool"
+  },
+  "completed_forced_two": {
+   "body": "{\"id\":\"resp_s2_t\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"t_paris\",\"id\":\"fc_t_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"t_oslo\",\"id\":\"fc_t_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"}",
+   "status": 0,
+   "kind": "",
+   "message": ""
+  },
+  "completed_native_choice_none": {
+   "body": "{\"id\":\"resp_s2_t\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"call_t_native\",\"id\":\"fc_t_native\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"}",
+   "status": 0,
+   "kind": "",
+   "message": ""
+  },
+  "completed_parallel_false_two": {
+   "body": "{\"id\":\"resp_s2_t\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"t_paris\",\"id\":\"fc_t_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"},{\"arguments\":\"{\\\"city\\\":\\\"Oslo\\\"}\",\"call_id\":\"t_oslo\",\"id\":\"fc_t_oslo\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"}",
+   "status": 0,
+   "kind": "",
+   "message": ""
+  },
+  "completed_relay": {
+   "body": "{\"id\":\"resp_s2_t\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"t_paris\",\"id\":\"fc_t_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"completed\"}",
+   "status": 0,
+   "kind": "",
+   "message": ""
+  },
+  "completed_required_text_only": {
+   "body": "{\"id\":\"resp_s2_t\",\"output\":[{\"content\":[{\"text\":\"text only\",\"type\":\"output_text\"}],\"role\":\"assistant\",\"type\":\"message\"}],\"status\":\"completed\"}",
+   "status": 0,
+   "kind": "",
+   "message": ""
+  },
+  "failed_with_finished_relay": {
+   "body": "{\"id\":\"resp_s2_t\",\"output\":[{\"content\":[{\"text\":\"partial\",\"type\":\"output_text\"}],\"role\":\"assistant\",\"type\":\"message\"},{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"t_paris\",\"id\":\"fc_t_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"failed\"}",
+   "status": 0,
+   "kind": "",
+   "message": ""
+  },
+  "incomplete_with_finished_relay": {
+   "body": "{\"id\":\"resp_s2_t\",\"output\":[{\"arguments\":\"{\\\"city\\\":\\\"Paris\\\"}\",\"call_id\":\"t_paris\",\"id\":\"fc_t_paris\",\"name\":\"get_weather\",\"status\":\"completed\",\"type\":\"function_call\"}],\"status\":\"incomplete\"}",
+   "status": 0,
+   "kind": "",
+   "message": ""
+  },
+  "incomplete_with_unfinished_relay": {
+   "body": "",
+   "status": 422,
+   "kind": "invalid_tool_call",
+   "message": "Upstream tool call could not be converted to a declared client tool"
+  }
+ }
+}

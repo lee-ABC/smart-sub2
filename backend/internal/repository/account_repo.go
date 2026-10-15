@@ -574,6 +574,9 @@ func (r *accountRepository) updateLockedAccount(
 		return nil, err
 	}
 	account.Extra = extra
+	if err := preserveLockedBPSCredentials(ctx, client, account); err != nil {
+		return nil, err
+	}
 	if err := preserveLockedAccountProtection(ctx, client, account); err != nil {
 		return nil, err
 	}
@@ -870,7 +873,11 @@ func (r *accountRepository) UpdateCredentials(ctx context.Context, id int64, cre
 	result, err := client.ExecContext(ctx, `
 		UPDATE accounts
 		SET
-			credentials = $1::jsonb,
+			credentials = CASE
+                WHEN platform='openai' AND type='oauth' THEN
+                    ($1::jsonb - 'bps_credentials') || CASE WHEN credentials ? 'bps_credentials'
+                     THEN jsonb_build_object('bps_credentials',credentials->'bps_credentials') ELSE '{}'::jsonb END
+                ELSE $1::jsonb END,
 			extra = CASE
 				-- 凭证整体未变化 ⇒ Ollama 组身份必然未变化；顶层 DISTINCT 守卫防止
 				-- 非 Ollama 账号的无变化持久化误清探测快照或重写 NULL extra。

@@ -1,0 +1,117 @@
+package basispoints
+
+// Runs ONLY in the h22-live tree: records h22's own outputs for the H25 S1
+// fixtures. Output path from S1_GOLDEN_OUT.
+
+import (
+	"encoding/json"
+	"os"
+	"regexp"
+	"sort"
+	"testing"
+)
+
+// h22 appends one sentence per custom tool in Go map order, so with two or
+// more custom tools each call returns one of several orders. Every value
+// recorded below is a genuine h22 output: the one whose custom-tool sentences
+// are in sorted order (retried until h22 produced it).
+var s1CustomSentence = regexp.MustCompile(`Custom tool (\S+) receives`)
+
+func s1SortedCustomOrder(text string) bool {
+	names := []string{}
+	for _, match := range s1CustomSentence.FindAllStringSubmatch(text, -1) {
+		names = append(names, match[1])
+	}
+	return sort.StringsAreSorted(names)
+}
+
+func s1SortedVariant(t *testing.T, produce func() string) string {
+	for i := 0; i < 2000; i++ {
+		if text := produce(); s1SortedCustomOrder(text) {
+			return text
+		}
+	}
+	t.Fatal("h22 never produced the sorted custom-tool order")
+	return ""
+}
+
+type s1GoldenPrompt struct {
+	Body            string `json:"body"`
+	PlainBody       string `json:"plain_body"`
+	Instructions    string `json:"instructions"`
+	PlainInstr      string `json:"plain_instructions"`
+	Reminder        string `json:"reminder"`
+	ReminderPresent bool   `json:"reminder_present"`
+}
+
+type s1GoldenDecode struct {
+	OK   bool   `json:"ok"`
+	Call string `json:"call"`
+}
+
+type s1Golden struct {
+	Generator          string                    `json:"generator"`
+	Prompts            map[string]s1GoldenPrompt `json:"prompts"`
+	TwoCustomReminders []string                  `json:"two_custom_reminders"`
+	Decodes            map[string]s1GoldenDecode `json:"decodes"`
+}
+
+func TestGenerateS1Golden(t *testing.T) {
+	out := os.Getenv("S1_GOLDEN_OUT")
+	if out == "" {
+		t.Skip("S1_GOLDEN_OUT not set")
+	}
+	golden := s1Golden{Generator: "h22-live " + Version, Prompts: map[string]s1GoldenPrompt{}, Decodes: map[string]s1GoldenDecode{}}
+	for _, fixture := range s1PromptFixtures() {
+		fixture := fixture
+		body := s1SortedVariant(t, func() string {
+			body, err := prepareResponsesBody(cloneObject(fixture.Source), defaultConfig())
+			if err != nil {
+				t.Fatal(fixture.Name, err)
+			}
+			return string(jsonBytes(body))
+		})
+		plainBody := s1SortedVariant(t, func() string {
+			plainCfg := defaultConfig()
+			plainCfg.ClientIdentity.PlainPrologue = true
+			source := cloneObject(fixture.Source)
+			plainBody, err := prepareResponsesBodyFor(source, plainCfg, conversationScope(source), persona{}, identityHygiene)
+			if err != nil {
+				t.Fatal(fixture.Name, err)
+			}
+			return string(jsonBytes(plainBody))
+		})
+		reminder := s1SortedVariant(t, func() string { return clientToolProtocolReminder(fixture.Source) })
+		golden.Prompts[fixture.Name] = s1GoldenPrompt{
+			Body: body, PlainBody: plainBody,
+			Instructions: clientToolProtocolInstructionsFor(fixture.Source, false),
+			PlainInstr:   clientToolProtocolInstructionsFor(fixture.Source, true),
+			Reminder:     reminder, ReminderPresent: reminder != "",
+		}
+	}
+	seen := map[string]bool{}
+	for i := 0; i < 400; i++ {
+		seen[clientToolProtocolReminder(s1TwoCustomSource())] = true
+	}
+	for text := range seen {
+		golden.TwoCustomReminders = append(golden.TwoCustomReminders, text)
+	}
+	sort.Strings(golden.TwoCustomReminders)
+	sources := s1DecodeSources()
+	for _, fixture := range s1DecodeFixtures() {
+		call, ok := decodeTransportItem(cloneObject(fixture.Native), sources[fixture.Source])
+		record := s1GoldenDecode{OK: ok}
+		if ok {
+			record.Call = string(jsonBytes(call))
+		}
+		golden.Decodes[fixture.Name] = record
+	}
+	data, err := json.MarshalIndent(golden, "", " ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(out, append(data, '\n'), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("prompts=%d decodes=%d two_custom_orders=%d", len(golden.Prompts), len(golden.Decodes), len(golden.TwoCustomReminders))
+}

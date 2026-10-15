@@ -1,0 +1,96 @@
+# CPA plugin configuration. The default model is exposed as
+# gpt-6-astra-basispoints and is sent upstream as gpt-6-astra.
+responses_url: https://bps.openai.com/basispoints/api/responses
+upstream_model: gpt-6-astra
+models:
+  - gpt-6-astra-basispoints
+timeout_seconds: 300
+max_response_bytes: 67108864
+auth_mode: chatgpt
+# Relay switches (h25). Leave them out: every default is h22's behaviour.
+# Deleting a line (or the whole plugin section) restores its default; the
+# settings.json cache never brings a switch back. An unreadable value falls
+# back to the default with a warning in the log and never fails plugin
+# registration. The values in effect are served read-only at the plugin
+# resource "relay-status".
+# The four true/false switches take YAML booleans only: true or false
+# (True/TRUE/False/FALSE also work), unquoted. yes/no/on/off, "true"/"no" in
+# quotes, 1/0 and anything else fall back to the default with a warning.
+#
+# relay_protocol: legacy           # legacy | auto | references
+#   legacy: h22's run_officejs envelope; the references field is ignored.
+#   auto: new relay conversations use references + raw payload, uncertain old
+#   history stays legacy. Not verified against the real upstream yet.
+# relay_tool_contracts: summary    # summary | full (complete definitions;
+#                                  # over budget falls back to summary)
+# relay_tool_delivery: immediate   # immediate | batch
+#   batch: relay calls wait for the terminal snapshot; an SSE comment keeps
+#   the client connection alive meanwhile (a heartbeat that stops early is
+#   counted as batch_heartbeat_stopped and logged).
+# tool_policy_checks: log          # log | enforce
+# history_conflict: replay         # replay | reject
+#   replay: h22. A relayed call replays the model's own run_officejs call even
+#   if the client rewrote its copy; differences are logged, never refused.
+#   reject: rc2. 400 history_conflict when the history contradicts a call
+#   delivered under the same caller, credential and explicit session id.
+# relay_incomplete: error          # error | passthrough
+# relay_hide_encrypted_tools: true  # relay prompt leaves out namespaced tools
+#                                  # whose parameters say "encrypted": true; a
+#                                  # run_officejs call to one comes back without
+#                                  # its namespace (client: unsupported call)
+# coerce_scalar_strings: true      # "20" -> 20 / "true" -> true where the
+#                                  # schema asks for a number/boolean, and
+#                                  # only when the result then validates
+# retryable_error_hint: true
+# schema_shadow: false             # observation only; logs fixed result codes
+#                                  # without tool names, arguments or schemas
+# relay_no_catalog_transport: error  # error | continue (a1wide2)
+#   A request with no callable client tool (no tools, or tool_choice none)
+#   whose model calls the upstream run_officejs anyway. error: decoded as a
+#   relay call, which fails (invalid_tool_call, h22). continue: the call is
+#   never delivered; when it ends the turn the plugin answers it upstream as
+#   unavailable on the same credential and streams the continuation as the
+#   rest of the same response (at most twice per request, usage summed).
+# Native promotion (A1, experimental; see exp/A1-NOTES.md). Off by default:
+# with these three lines left out (or written at their defaults) everything
+# sent upstream and to the client is h25's.
+# relay_native_promotion: off       # off | shadow | on
+#   shadow: decide and count only (relay-status summary "a1"); the upstream
+#   body stays byte for byte the relay body.
+#   on: a relayed request's top-level tools go upstream the Responses-Lite
+#   way, in an additional_tools item at input[0] (flat tools in a "functions"
+#   namespace, client namespaces kept, schemas lowered as Codex lowers them,
+#   hosted tools dropped). A 400 before the stream opens is retried once on
+#   the same credential with the relay body; the client sees nothing of it.
+# relay_native_promotion_history: h1  # h1 | h2
+#   h1: earlier relay calls stay run_officejs (mixed history).
+#   h2: every earlier client call goes up as the client's own native call.
+# relay_native_promotion_block: custom_format_other,strict_true
+#   Requests whose catalogue uses any of these stay on the relay. Words: ref,
+#   composition, enum, type_list, strict_true, custom_format_other,
+#   additional_properties_true, additional_properties_schema, encrypted,
+#   compacted, custom_tool, namespace, builtin_name, compaction, tool_choice;
+#   "none" blocks nothing.
+#   The default shrank on 2026-10-09 after stage 1 measured the upstream on
+#   one test account: enum, anyOf|oneOf|allOf, $ref+$defs, an array-valued
+#   type and additionalProperties in both forms are all accepted and answered
+#   with a real native call, so only strict_true (refused before the stream
+#   opens) and custom_format_other (accepted, never called natively) remain.
+# Optional authoritative Basis Points tools catalog version.
+# tools_version_id: tools-excel-core-2026-06-16-3af59f22
+#
+# ----------------------------------------------------------------------------
+# EXPERIMENT BUILD ONLY (-tags bpsexp). These keys do nothing in the shipped
+# plugin: the production build never reads them. In the experiment build they
+# are read by the anti-misuse self-check and the per-request arm selection.
+# The experiment arms ONLY when experiment_stage_id equals the BPSEXP_STAGE_ID
+# environment variable, public_base_url is empty, and exactly one credential is
+# ever seen; otherwise every experiment feature is disabled and the fault is
+# logged and shown at relay-status. See exp/EXP-BUILD.md. NEVER set these on a
+# production CPA.
+# experiment_stage_id: ""            # must equal $BPSEXP_STAGE_ID to arm
+# experiment_record_dir: ""          # where captured fixtures are written (0700/0600)
+# experiment_default_arm: ""         # arm when a request carries none (e.g. A0)
+# experiment_auth_id: ""             # the one credential's AuthID, if declared
+# experiment_shadow_rewrite: false   # queue relay invalid_tool_call for A2 shadow rewrite
+# experiment_scrub: ""               # comma-separated strings to hash out of fixtures

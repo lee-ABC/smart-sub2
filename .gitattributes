@@ -30,3 +30,12 @@ frontend/src/views/admin/GroupsView.vue -text
 frontend/src/views/admin/IntelligentTestsView.vue -text
 frontend/src/views/user/DashboardView.vue -text
 frontend/src/views/user/KeysView.vue -text
+
+# Preserve pinned CPA source bytes; do not normalize upstream CRLF files.
+deploy/bps-adapter/internal/basispoints/costpricing.go -text
+deploy/bps-adapter/internal/basispoints/costservice.go -text
+deploy/bps-adapter/internal/basispoints/identity.go -text
+deploy/bps-adapter/internal/basispoints/identitydata.go -text
+deploy/bps-adapter/internal/basispoints/zz_identity_test.go -text
+deploy/bps-login/runtime/src/chromeHeaderOrder.js -text
+deploy/bps-login/runtime/src/secFetch.js -text

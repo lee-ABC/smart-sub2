@@ -8,6 +8,8 @@ const {
   syncUpstreamModelsMock,
   showWarningMock,
   importCodexSessionMock,
+  importBpsLoginMock,
+  cancelBpsLoginMock,
   createOpenAICodexPATMock,
   authIsSimpleMode,
 } = vi.hoisted(() => ({
@@ -16,6 +18,8 @@ const {
   syncUpstreamModelsMock: vi.fn(),
   showWarningMock: vi.fn(),
   importCodexSessionMock: vi.fn(),
+  importBpsLoginMock: vi.fn(),
+  cancelBpsLoginMock: vi.fn(),
   createOpenAICodexPATMock: vi.fn(),
   authIsSimpleMode: { value: true },
 }))
@@ -44,6 +48,8 @@ vi.mock('@/api/admin', () => ({
       syncUpstreamModels: syncUpstreamModelsMock,
       checkMixedChannelRisk: vi.fn().mockResolvedValue({ has_risk: false }),
       importCodexSession: importCodexSessionMock,
+      importBpsLogin: importBpsLoginMock,
+      cancelBpsLogin: cancelBpsLoginMock,
       createOpenAICodexPAT: createOpenAICodexPATMock,
     },
     settings: {
@@ -81,15 +87,19 @@ const OAuthAuthorizationFlowStub = defineComponent({
   props: {
     showManualOption: Boolean,
     showCodexSessionImportOption: Boolean,
+    showBpsLoginOption: Boolean,
+    proxyId: Number,
     showAgentIdentityOption: Boolean,
     showCodexPatOption: Boolean,
     initialInputMethod: String,
   },
   data: () => ({ inputMethod: 'manual' }),
-  emits: ['import-codex-session', 'import-codex-pat'],
+  methods: { reset() { this.inputMethod = 'manual' } },
+  emits: ['import-codex-session', 'import-codex-pat', 'confirm-bps-login'],
   template: `
     <div>
       <button data-testid="import-codex-session" @click="$emit('import-codex-session', 'session-json')">session</button>
+      <button data-testid="confirm-bps-login" @click="$emit('confirm-bps-login', 'job-123')">bps</button>
       <button data-testid="import-codex-pat" @click="$emit('import-codex-pat', 'pat-token')">pat</button>
     </div>
   `,
@@ -209,6 +219,8 @@ describe('CreateAccountModal OpenAI long-context billing', () => {
       errors: [],
       warnings: [],
     })
+    importBpsLoginMock.mockReset().mockResolvedValue({ created: 1, updated: 0, skipped: 0, failed: 0, errors: [], warnings: [] })
+    cancelBpsLoginMock.mockReset().mockResolvedValue(undefined)
     createOpenAICodexPATMock.mockReset().mockResolvedValue({})
   })
 
@@ -610,6 +622,50 @@ describe('CreateAccountModal OpenAI long-context billing', () => {
 
     expect(importCodexSessionMock).toHaveBeenCalledTimes(1)
     expect(importCodexSessionMock.mock.calls[0]?.[0]?.extra?.openai_long_context_billing_enabled).toBeUndefined()
+  })
+
+  it('uses identical first-step import options for BPS without sending credentials to the browser', async () => {
+    const wrapper = await openCodexImportStep(1)
+    const flow = wrapper.getComponent(OAuthAuthorizationFlowStub)
+    expect(flow.props('showBpsLoginOption')).toBe(true)
+    await wrapper.get('[data-testid="import-codex-session"]').trigger('click')
+    await flushPromises()
+    const nativeOptions = { ...importCodexSessionMock.mock.calls[0][0] }
+    delete nativeOptions.content
+    await wrapper.get('[data-testid="confirm-bps-login"]').trigger('click')
+    await flushPromises()
+    expect(importBpsLoginMock).toHaveBeenCalledWith('job-123', nativeOptions)
+    const payload = importBpsLoginMock.mock.calls[0][1]
+    expect(payload).not.toHaveProperty('content')
+    expect(payload).not.toHaveProperty('contents')
+    expect(payload).not.toHaveProperty('access_token')
+    expect(payload).not.toHaveProperty('refresh_token')
+  })
+
+  it('blocks duplicate BPS confirmation while import is in flight', async () => {
+    let resolve!: (value: unknown) => void
+    importBpsLoginMock.mockReturnValue(new Promise((done) => { resolve = done }))
+    const wrapper = await openCodexImportStep()
+    await wrapper.get('[data-testid="confirm-bps-login"]').trigger('click')
+    await wrapper.get('[data-testid="confirm-bps-login"]').trigger('click')
+    expect(importBpsLoginMock).toHaveBeenCalledTimes(1)
+    resolve({ created: 1, updated: 0, skipped: 0, failed: 0 })
+    await flushPromises()
+  })
+
+  it('ignores late BPS import completion after closing and reopening the modal', async () => {
+    let resolve!: (value: unknown) => void
+    importBpsLoginMock.mockReturnValue(new Promise((done) => { resolve = done }))
+    const wrapper = await openCodexImportStep()
+    await wrapper.get('[data-testid="confirm-bps-login"]').trigger('click')
+    await wrapper.setProps({ show: false })
+    await wrapper.setProps({ show: true })
+    expect(cancelBpsLoginMock).not.toHaveBeenCalled()
+    resolve({ created: 1, updated: 0, skipped: 0, failed: 0 })
+    await flushPromises()
+    expect(wrapper.emitted('close')).toBeUndefined()
+    expect(wrapper.emitted('created')).toBeUndefined()
+    expect(cancelBpsLoginMock).toHaveBeenCalledWith('job-123')
   })
 
   it('leaves Codex PAT import billing ownership to the backend', async () => {

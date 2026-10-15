@@ -1,0 +1,68 @@
+package basispoints
+
+// Runs ONLY in the h22-live tree, next to zz_h25_s2_fixtures_test.go,
+// zz_h25_s3_fixtures_test.go, zz_h25_s4_fixtures_test.go and
+// zz_h25_s5_fixtures_test.go copied unchanged: records h22's own outputs for
+// the H25 S5 cases under every profile. Output path from S5_GOLDEN_OUT.
+//
+//   git archive h22-live | tar -x -C <dir>
+//   cp internal/basispoints/zz_h25_s{2,3,4,5}_fixtures_test.go <dir>/internal/basispoints/
+//   cp internal/basispoints/testdata/h22_s5_golden_gen.go.txt <dir>/internal/basispoints/zz_h22_s5_golden_gen_test.go
+//   cd <dir> && S5_GOLDEN_OUT=<out.json> go test ./internal/basispoints/ -run TestGenerateS5Golden -count=1
+
+import (
+	"encoding/json"
+	"os"
+	"testing"
+)
+
+type s5Golden struct {
+	Generator string                           `json:"generator"`
+	Profiles  map[string]map[string][]s5Result `json:"profiles"`
+}
+
+// s5ResetH22Caches empties h22's process-wide caches, so every case sees
+// exactly the state its own turns build.
+func s5ResetH22Caches() {
+	nativeCallCache.Lock()
+	nativeCallCache.items = map[string]nativeCallEntry{}
+	nativeCallCache.order = nil
+	nativeCallCache.Unlock()
+	namespaceCache.Lock()
+	namespaceCache.items = map[string]map[string]string{}
+	namespaceCache.order = nil
+	namespaceCache.Unlock()
+	turnIDCache.Lock()
+	turnIDCache.items = map[string]turnIDEntry{}
+	turnIDCache.order = nil
+	turnIDCache.Unlock()
+}
+
+func TestGenerateS5Golden(t *testing.T) {
+	out := os.Getenv("S5_GOLDEN_OUT")
+	if out == "" {
+		t.Skip("S5_GOLDEN_OUT not set")
+	}
+	golden := s5Golden{Generator: "h22-live " + Version, Profiles: map[string]map[string][]s5Result{}}
+	turns := 0
+	for _, profile := range s5Profiles() {
+		cases := map[string][]s5Result{}
+		for _, c := range s5Cases() {
+			if _, exists := cases[c.Name]; exists {
+				t.Fatalf("duplicate case %s", c.Name)
+			}
+			s5ResetH22Caches()
+			cases[c.Name] = s5RunCase(t, profile, c, "")
+			turns += len(c.Turns)
+		}
+		golden.Profiles[profile.Name] = cases
+	}
+	data, err := json.MarshalIndent(golden, "", " ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(out, append(data, '\n'), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("profiles=%d turns=%d", len(golden.Profiles), turns)
+}

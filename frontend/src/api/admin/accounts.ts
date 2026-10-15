@@ -860,6 +860,60 @@ export async function importCodexSession(payload: CodexSessionImportRequest): Pr
   return data
 }
 
+export type BpsLoginStatus = 'queued' | 'running' | 'awaiting_input' | 'ready' | 'completed' | 'failed' | 'cancelled' | 'expired'
+export type BpsWorkspacePreference = 'team_first' | 'team' | 'personal' | 'first'
+
+export interface BpsLoginJob {
+  id: string
+  status: BpsLoginStatus
+  phase: string
+  code?: string
+  expires_at: string | number
+  challenge_kind?: 'email_otp' | 'workspace'
+  workspace_choices?: Array<{ id: string; name: string; kind: string }>
+  preview?: { email: string; workspace_id: string; plan_type: string; expires_at: string | number }
+}
+
+export interface BpsLoginStartRequest {
+  email: string
+  password: string
+  totp_secret: string
+  workspace_id?: string
+  workspace_preference?: BpsWorkspacePreference
+  proxy_id?: number | null
+}
+
+export async function startBpsLogin(payload: BpsLoginStartRequest): Promise<BpsLoginJob> {
+  const { data } = await apiClient.post<BpsLoginJob>('/admin/accounts/bps-login', payload)
+  return data
+}
+
+export async function getBpsLogin(id: string, signal?: AbortSignal): Promise<BpsLoginJob> {
+  const { data } = await apiClient.get<BpsLoginJob>(`/admin/accounts/bps-login/${encodeURIComponent(id)}`, { signal })
+  return data
+}
+
+export async function submitBpsLoginInput(
+  id: string,
+  input: { kind: 'email_otp' | 'workspace'; value: string },
+  signal?: AbortSignal
+): Promise<BpsLoginJob> {
+  const { data } = await apiClient.post<BpsLoginJob>(`/admin/accounts/bps-login/${encodeURIComponent(id)}/input`, input, { signal })
+  return data
+}
+
+export async function cancelBpsLogin(id: string): Promise<void> {
+  await apiClient.delete(`/admin/accounts/bps-login/${encodeURIComponent(id)}`)
+}
+
+export async function importBpsLogin(
+  id: string,
+  payload: Omit<CodexSessionImportRequest, 'content' | 'contents'>
+): Promise<CodexSessionImportResult> {
+  const { data } = await apiClient.post<CodexSessionImportResult>(`/admin/accounts/bps-login/${encodeURIComponent(id)}/import`, payload, { timeout: 120000 })
+  return data
+}
+
 export async function createOpenAICodexPAT(payload: OpenAICodexPATCreateRequest): Promise<Account> {
   const { data } = await apiClient.post<Account>('/admin/openai/create-from-codex-pat', payload)
   return data
@@ -1211,6 +1265,11 @@ export const accountsAPI = {
   exportData,
   importData,
   importCodexSession,
+  startBpsLogin,
+  getBpsLogin,
+  submitBpsLoginInput,
+  cancelBpsLogin,
+  importBpsLogin,
   createOpenAICodexPAT,
   getAntigravityDefaultModelMapping,
   batchDelete,

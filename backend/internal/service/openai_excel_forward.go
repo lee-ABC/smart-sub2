@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -16,15 +17,51 @@ type excelRequestRoute struct {
 	config         *ExcelRoutingConfig
 	keyID, groupID int64
 	source         string
+	websocket      bool
+	wsHeaders      http.Header
 }
 type excelRequestRouteKey struct{}
 
+// Freeze outbound selection per account/model attempt. A concurrent group edit
+// must not choose one credential and another transport for the same request.
+type excelRequestSelectionKey struct{}
+type excelRequestSelection struct {
+	accountID, keyID, groupID int64
+	model                     string
+}
+
+// PrepareOpenAIOutboundContext resolves routing after the native scheduler has
+// selected the account, before the WS handler obtains any bearer credential.
+func (s *OpenAIGatewayService) PrepareOpenAIOutboundContext(ctx context.Context, c *gin.Context, account *Account, model string) (context.Context, error) {
+	return prepareExcelRequestContext(ctx, c, account, excelRoutingModel(account, model, ""))
+}
+
 func prepareExcelRequestContext(ctx context.Context, c *gin.Context, account *Account, model string) (context.Context, error) {
-	ctx = context.WithValue(ctx, excelRequestRouteKey{}, (*excelRequestRoute)(nil))
-	if account == nil || !account.IsOpenAIOAuthLike() || !IsExcelSupportedModel(model) || isOpenAIResponsesCompactPath(c) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	var key *APIKey
+	if c != nil {
+		key = getAPIKeyFromContext(c)
+	}
+	selection := excelRequestSelection{model: model}
+	if account != nil {
+		selection.accountID = account.ID
+	}
+	if key != nil {
+		selection.keyID = key.ID
+		if key.GroupID != nil {
+			selection.groupID = *key.GroupID
+		}
+	}
+	if previous, ok := ctx.Value(excelRequestSelectionKey{}).(excelRequestSelection); ok && previous == selection {
 		return ctx, nil
 	}
-	key := getAPIKeyFromContext(c)
+	ctx = context.WithValue(ctx, excelRequestSelectionKey{}, selection)
+	ctx = context.WithValue(ctx, excelRequestRouteKey{}, (*excelRequestRoute)(nil))
+	if account == nil || !account.IsOpenAIOAuthLike() || !IsExcelSupportedModel(model) || (c != nil && isOpenAIResponsesCompactPath(c)) {
+		return ctx, nil
+	}
 	if key == nil || key.GroupID == nil || account == nil || account.Platform != PlatformOpenAI {
 		return ctx, nil
 	}
@@ -79,9 +116,9 @@ func (s *OpenAIGatewayService) forwardExcelHTTP(request *http.Request, proxyURL 
 	if err != nil {
 		return nil, true, err
 	}
-	workspace := identity.GetChatGPTAccountID()
-	if workspace == "" {
-		return nil, true, fmt.Errorf("selected account has no ChatGPT workspace identity")
+	workspace, user, err := BPSCredentialIdentity(identity)
+	if err != nil {
+		return nil, true, outboundCredentialFailover(err, true)
 	}
 	headers := http.Header{}
 	headers.Set("Authorization", "Bearer "+serviceKey)
@@ -89,13 +126,14 @@ func (s *OpenAIGatewayService) forwardExcelHTTP(request *http.Request, proxyURL 
 	headers.Set("Accept", request.Header.Get("Accept"))
 	headers.Set("X-Sub2-Excel-Access-Token", token)
 	headers.Set("X-Sub2-Excel-Account-Id", workspace)
+	headers.Set("X-Sub2-Excel-Credential-Id", strconv.FormatInt(account.ID, 10))
 	// Preserve existing public-request session scopes across this upgrade.
 	scope := fmt.Sprintf("%d:%d:%d:%s", route.keyID, route.groupID, account.ID, workspace)
 	if route.source == "account-test" {
 		scope = "account-test:" + scope
 	}
 	headers.Set("X-Sub2-Excel-Scope", fmt.Sprintf("%x", sha256.Sum256([]byte(scope))))
-	if user := identity.GetChatGPTUserID(); user != "" {
+	if user != "" {
 		headers.Set("X-Sub2-Excel-Account-User-Id", user)
 	}
 	if proxyURL != "" {

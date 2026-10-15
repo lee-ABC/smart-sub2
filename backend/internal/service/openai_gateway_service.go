@@ -1200,6 +1200,24 @@ func (s *OpenAIGatewayService) GetAccessToken(ctx context.Context, account *Acco
 		}
 		account = credAccount
 	}
+	if account.Platform == PlatformOpenAI && account.IsOpenAIOAuthLike() {
+		if isExcelRequest(ctx) {
+			var token string
+			var err error
+			if s.openAITokenProvider != nil {
+				token, err = s.openAITokenProvider.GetBPSAccessToken(ctx, account)
+			} else {
+				token, err = bpsProfileToken(account)
+			}
+			if err != nil {
+				return "", "", outboundCredentialFailover(err, true)
+			}
+			return token, "oauth", nil
+		}
+		if err := NativeOAuthCredentialError(account); err != nil {
+			return "", "", outboundCredentialFailover(err, false)
+		}
+	}
 	switch account.Type {
 	case AccountTypeOAuth:
 		if account.IsOpenAIAgentIdentity() {

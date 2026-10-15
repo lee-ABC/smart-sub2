@@ -2712,7 +2712,11 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 			reqLog.Warn("openai.websocket_bind_sticky_session_after_profit_admission_failed", zap.Int64("account_id", account.ID), zap.Error(err))
 		}
 
-		token, _, err := h.gatewayService.GetRequestCredential(ctx, c, account)
+		credentialCtx, err := h.gatewayService.PrepareOpenAIOutboundContext(ctx, c, account, gjson.GetBytes(wsAttemptMessage, "model").String())
+		var token string
+		if err == nil {
+			token, _, err = h.gatewayService.GetRequestCredential(credentialCtx, c, account)
+		}
 		if err != nil {
 			reqLog.Warn("openai.websocket_get_access_token_failed", zap.Int64("account_id", account.ID), zap.Error(err))
 			if ctx.Err() != nil {
@@ -2728,6 +2732,8 @@ func (h *OpenAIGatewayHandler) ResponsesWebSocket(c *gin.Context) {
 			closeOpenAIClientWS(wsConn, coderws.StatusInternalError, "failed to get access token")
 			return
 		}
+
+		ctx = credentialCtx
 
 		reqLog.Debug("openai.websocket_account_selected",
 			zap.Int64("account_id", account.ID),

@@ -1,3 +1,24 @@
+# BPS integration source update — 2026-10-16
+
+This update publishes the previously deployed BPS integration into this source
+repository: separate native/BPS credentials, selected-account adapter, group
+outbound selection, Responses/Chat/Messages routing, interactive BPS2FA login,
+and optional thread identity with redacted diagnostics. See
+`docs/BPS_INTEGRATION.md` and each helper's README/UPSTREAM notices.
+
+The CPA integration remains pinned to `4aabe5c3c7543e5c08741eeaa51569d792455a86`.
+The pinned Linux x64 TLS runtime dependency is included so a clean checkout can
+build the login helper. Production credentials, private config, pepper, logs,
+HARs, databases, image archives and local deployment notes are excluded.
+`SOURCE_SHA256SUMS` is regenerated for this source tree (excluding itself).
+
+This is a source publication, not a production rollout or claim of a new
+bit-identical rebuild. The deployment build provenance below describes the
+historical initial snapshot and is retained as such. No release tag, manual
+release workflow, database migration or service restart accompanies this push.
+
+---
+
 # 部署版本源码快照 / Deployed source snapshot
 
 本仓库发布用户指定 `sub2新站/sub2-demo` 目录中的源码。保留上游 LICENSE、署名、应用源码及测试；本次发布不修改应用功能，也不更换生产服务。

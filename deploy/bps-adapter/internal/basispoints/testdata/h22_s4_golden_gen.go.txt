@@ -1,0 +1,118 @@
+package basispoints
+
+// Runs ONLY in the h22-live tree, next to zz_h25_s2_fixtures_test.go,
+// zz_h25_s3_fixtures_test.go and zz_h25_s4_fixtures_test.go copied unchanged:
+// records h22's own outputs for the H25 S4 fixtures. Output path from
+// S4_GOLDEN_OUT.
+
+import (
+	"encoding/json"
+	"errors"
+	"os"
+	"testing"
+)
+
+type s4GoldenPrompt struct {
+	Body                     string `json:"body"`
+	PlainBody                string `json:"plain_body"`
+	Instructions             string `json:"instructions"`
+	PlainInstructions        string `json:"plain_instructions"`
+	Reminder                 string `json:"reminder"`
+	NoRelayInstructions      string `json:"no_relay_instructions"`
+	NoRelayPlainInstructions string `json:"no_relay_plain_instructions"`
+}
+
+type s4GoldenDecode struct {
+	OK   bool   `json:"ok"`
+	Call string `json:"call"`
+}
+
+type s4GoldenStream struct {
+	Events   []string `json:"events"`
+	CloseErr string   `json:"close_err"`
+}
+
+type s4GoldenTransform struct {
+	Body   string `json:"body"`
+	Status int    `json:"status"`
+	Kind   string `json:"kind"`
+}
+
+type s4Golden struct {
+	Generator  string                       `json:"generator"`
+	Prompts    map[string]s4GoldenPrompt    `json:"prompts"`
+	Decodes    map[string]s4GoldenDecode    `json:"decodes"`
+	Streams    map[string]s4GoldenStream    `json:"streams"`
+	Transforms map[string]s4GoldenTransform `json:"transforms"`
+	Scenarios  map[string][]s3TurnResult    `json:"scenarios"`
+}
+
+func TestGenerateS4Golden(t *testing.T) {
+	out := os.Getenv("S4_GOLDEN_OUT")
+	if out == "" {
+		t.Skip("S4_GOLDEN_OUT not set")
+	}
+	golden := s4Golden{Generator: "h22-live " + Version, Prompts: map[string]s4GoldenPrompt{}, Decodes: map[string]s4GoldenDecode{},
+		Streams: map[string]s4GoldenStream{}, Transforms: map[string]s4GoldenTransform{}, Scenarios: map[string][]s3TurnResult{}}
+	for _, fixture := range s4PromptFixtures() {
+		body, err := prepareResponsesBody(cloneObject(fixture.Source), defaultConfig())
+		if err != nil {
+			t.Fatal(fixture.Name, err)
+		}
+		plainCfg := defaultConfig()
+		plainCfg.ClientIdentity.PlainPrologue = true
+		source := cloneObject(fixture.Source)
+		plainBody, err := prepareResponsesBodyFor(source, plainCfg, conversationScope(source), persona{}, identityHygiene)
+		if err != nil {
+			t.Fatal(fixture.Name, err)
+		}
+		withoutTools := cloneObject(fixture.Source)
+		delete(withoutTools, "tools")
+		golden.Prompts[fixture.Name] = s4GoldenPrompt{
+			Body: string(jsonBytes(body)), PlainBody: string(jsonBytes(plainBody)),
+			Instructions:             clientToolProtocolInstructionsFor(fixture.Source, false),
+			PlainInstructions:        clientToolProtocolInstructionsFor(fixture.Source, true),
+			Reminder:                 clientToolProtocolReminder(fixture.Source),
+			NoRelayInstructions:      clientToolProtocolInstructionsFor(withoutTools, false),
+			NoRelayPlainInstructions: clientToolProtocolInstructionsFor(withoutTools, true),
+		}
+	}
+	sources := s4DecodeSources()
+	for _, fixture := range s4DecodeFixtures() {
+		call, ok := decodeTransportItem(cloneObject(fixture.Native), sources[fixture.Source])
+		record := s4GoldenDecode{OK: ok}
+		if ok {
+			record.Call = string(jsonBytes(call))
+		}
+		golden.Decodes[fixture.Name] = record
+	}
+	for _, fixture := range s4StreamFixtures() {
+		fixture := fixture
+		t.Run(fixture.Name, func(t *testing.T) {
+			result := runStreamTest(t, cloneObject(fixture.Request), fixture.Chunks)
+			golden.Streams[fixture.Name] = s4GoldenStream{Events: s2NormalizeStream(result.joined()), CloseErr: result.closeErr}
+		})
+	}
+	for _, fixture := range s4TransformFixtures() {
+		body, _, _, err := transformResponseBody(jsonBytes(fixture.Response), cloneObject(fixture.Source))
+		record := s4GoldenTransform{Body: string(body)}
+		var api *APIError
+		if errors.As(err, &api) {
+			record = s4GoldenTransform{Status: api.Status, Kind: api.Kind}
+		} else if err != nil {
+			t.Fatal(fixture.Name, err)
+		}
+		golden.Transforms[fixture.Name] = record
+	}
+	for _, scenario := range s4Scenarios() {
+		golden.Scenarios[scenario.Name] = s3RunScenario(t, scenario, nil)
+	}
+	data, err := json.MarshalIndent(golden, "", " ")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(out, append(data, '\n'), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("prompts=%d decodes=%d streams=%d transforms=%d scenarios=%d", len(golden.Prompts), len(golden.Decodes), len(golden.Streams), len(golden.Transforms), len(golden.Scenarios))
+}

@@ -114,6 +114,10 @@
                 t('admin.accounts.oauth.openai.codexSessionAuth')
               }}</span>
             </label>
+            <label v-if="showBpsLoginOption && platform === 'openai'" class="flex cursor-pointer items-center gap-2">
+              <input v-model="inputMethod" type="radio" value="bps_login" class="text-blue-600 focus:ring-blue-500" :disabled="loading" />
+              <span class="text-sm text-blue-900 dark:text-blue-200">{{ t('admin.accounts.oauth.openai.bpsLoginAuth') }}</span>
+            </label>
             <label v-if="showAgentIdentityOption" class="flex cursor-pointer items-center gap-2">
               <input
                 v-model="inputMethod"
@@ -371,6 +375,15 @@
           </div>
         </div>
 
+        <BpsLoginFlow
+          v-if="inputMethod === 'bps_login' && platform === 'openai' && showBpsLoginOption"
+          ref="bpsLoginFlowRef"
+          :proxy-id="proxyId"
+          :importing="loading"
+          :import-error="error"
+          @confirm="emit('confirm-bps-login', $event)"
+        />
+
         <!-- Codex auth.json / session credential batch import -->
         <div v-if="inputMethod === 'codex_session' || inputMethod === 'agent_identity'" class="space-y-4">
           <div
@@ -379,6 +392,33 @@
             <p class="mb-3 text-sm text-blue-700 dark:text-blue-300">
               {{ t(isAgentIdentityInput ? 'admin.accounts.oauth.openai.agentIdentityDesc' : 'admin.accounts.oauth.openai.codexSessionDesc') }}
             </p>
+
+            <div v-if="!isAgentIdentityInput" class="mb-4 space-y-2">
+              <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                {{ t('admin.accounts.oauth.openai.codexSessionFilesLabel') }}
+                <input
+                  ref="codexSessionFileInput"
+                  type="file"
+                  accept=".json,application/json"
+                  multiple
+                  class="input mt-2 w-full text-sm"
+                  data-testid="codex-session-files"
+                  :disabled="loading || codexSessionFilesReading"
+                  @change="handleCodexSessionFiles"
+                />
+              </label>
+              <div v-if="codexSessionFiles.length || codexSessionFilesReading || codexSessionFileError" class="flex items-center justify-between gap-2 text-xs">
+                <span class="text-blue-700 dark:text-blue-300" role="status">
+                  {{ codexSessionFilesReading ? t('admin.accounts.oauth.openai.codexSessionFilesReading') : t('admin.accounts.oauth.openai.codexSessionFilesSelected', { count: codexSessionFiles.length }) }}
+                </span>
+                <button type="button" class="btn btn-secondary text-xs" :disabled="loading" data-testid="clear-codex-session-files" @click="clearCodexSessionFiles">
+                  {{ t('admin.accounts.oauth.openai.codexSessionFilesClear') }}
+                </button>
+              </div>
+              <p v-if="codexSessionFileError" role="alert" class="text-xs text-red-600 dark:text-red-400">{{ codexSessionFileError }}</p>
+              <p class="text-xs text-blue-700 dark:text-blue-300">{{ t('admin.accounts.oauth.openai.codexSessionDualCredentialsHint') }}</p>
+              <p class="text-xs text-blue-700 dark:text-blue-300">{{ t('admin.accounts.oauth.openai.codexSessionOutboundHint') }}</p>
+            </div>
 
             <div class="mb-4">
               <label
@@ -417,7 +457,8 @@
             <button
               type="button"
               class="btn btn-primary w-full"
-              :disabled="loading || !codexSessionInput.trim()"
+              :disabled="loading || codexSessionFilesReading || !!codexSessionFileError || !hasCodexSessionContent"
+              data-testid="import-codex-session"
               @click="handleImportCodexSession"
             >
               <svg
@@ -894,10 +935,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useClipboard } from '@/composables/useClipboard'
 import Icon from '@/components/icons/Icon.vue'
+import BpsLoginFlow from './BpsLoginFlow.vue'
 import type { AddMethod, AuthInputMethod } from '@/composables/useAccountOAuth'
 import type { AccountPlatform } from '@/types'
 import { adminAPI } from '@/api/admin'
@@ -918,6 +960,8 @@ interface Props {
   showSessionTokenOption?: boolean
   showAccessTokenOption?: boolean
   showCodexSessionImportOption?: boolean
+  showBpsLoginOption?: boolean
+  proxyId?: number | null
   showAgentIdentityOption?: boolean
   showCodexPatOption?: boolean
   showSsoOption?: boolean
@@ -949,6 +993,8 @@ const props = withDefaults(defineProps<Props>(), {
   showSessionTokenOption: false,
   showAccessTokenOption: false,
   showCodexSessionImportOption: false,
+  showBpsLoginOption: false,
+  proxyId: null,
   showAgentIdentityOption: false,
   showCodexPatOption: false,
   showSsoOption: false,
@@ -969,6 +1015,7 @@ const emit = defineEmits<{
   'validate-session-token': [sessionToken: string]
   'import-access-token': [accessToken: string]
   'import-codex-session': [content: string]
+  'confirm-bps-login': [jobId: string]
   'import-codex-pat': [accessToken: string]
   'import-sso': [content: string]
   'authorize-password': [emailPasswordInput: string]
@@ -1013,12 +1060,66 @@ const oauthImportantNotice = computed(() => {
 
 // Local state
 const inputMethod = ref<AuthInputMethod>(props.initialInputMethod)
+const bpsLoginFlowRef = ref<{ reset: () => void } | null>(null)
 const isAgentIdentityInput = computed(() => inputMethod.value === 'agent_identity')
 const authCodeInput = ref('')
 const sessionKeyInput = ref('')
 const refreshTokenInput = ref('')
 const sessionTokenInput = ref('')
 const codexSessionInput = ref('')
+const codexSessionFileInput = ref<HTMLInputElement | null>(null)
+const codexSessionFiles = ref<string[]>([])
+const codexSessionFilesReading = ref(false)
+const codexSessionFileError = ref('')
+let codexSessionReadGeneration = 0
+
+const clearCodexSessionFiles = () => {
+  codexSessionReadGeneration++
+  codexSessionFiles.value = []
+  codexSessionFilesReading.value = false
+  codexSessionFileError.value = ''
+  if (codexSessionFileInput.value) codexSessionFileInput.value.value = ''
+}
+
+const clearCodexSessionCredentials = () => {
+  clearCodexSessionFiles()
+  codexSessionInput.value = ''
+}
+
+const hasCodexSessionContent = computed(() => !!codexSessionInput.value.trim() || codexSessionFiles.value.length > 0)
+
+const handleCodexSessionFiles = async (event: Event) => {
+  if (props.loading || inputMethod.value !== 'codex_session') return
+  const input = event.target as HTMLInputElement
+  const files = Array.from(input.files || [])
+  // Drop the browser's retained FileList, including on cancel/error/reset.
+  input.value = ''
+  clearCodexSessionFiles()
+  if (files.length === 0) return
+  if (files.length > 100 || files.reduce((size, file) => size + file.size, 0) > 10 * 1024 * 1024) {
+    codexSessionFileError.value = t('admin.accounts.oauth.openai.codexSessionFilesTooLarge')
+    return
+  }
+  const generation = codexSessionReadGeneration
+  codexSessionFilesReading.value = true
+  try {
+    const contents = await Promise.all(files.map(async (file) => {
+      const value: unknown = JSON.parse(await file.text())
+      if (!value || typeof value !== 'object') throw new Error('invalid credential file')
+      // One compact JSON value per line allows the existing backend stream parser
+      // to combine files with manually pasted raw tokens without changing them.
+      return JSON.stringify(value)
+    }))
+    if (generation !== codexSessionReadGeneration) return
+    codexSessionFiles.value = contents
+  } catch {
+    if (generation !== codexSessionReadGeneration) return
+    // Do not include file contents or parser errors, which can contain tokens.
+    codexSessionFileError.value = t('admin.accounts.oauth.openai.codexSessionFilesInvalid')
+  } finally {
+    if (generation === codexSessionReadGeneration) codexSessionFilesReading.value = false
+  }
+}
 const codexPATInput = ref('')
 const ssoCookieInput = ref('')
 const emailPasswordInput = ref(props.initialEmailPassword || '')
@@ -1054,6 +1155,7 @@ const methodOptionCount = computed(() => [
   props.showSessionTokenOption,
   props.showAccessTokenOption,
   props.showCodexSessionImportOption,
+  props.showBpsLoginOption && props.platform === 'openai',
   props.showAgentIdentityOption,
   props.showCodexPatOption,
   props.showSsoOption,
@@ -1126,8 +1228,12 @@ watch(
 )
 
 watch(inputMethod, (newVal) => {
+  clearCodexSessionCredentials()
   emit('update:inputMethod', newVal)
-})
+}, { flush: 'sync' })
+
+watch(() => [props.platform, props.addMethod], clearCodexSessionCredentials, { flush: 'sync' })
+onBeforeUnmount(clearCodexSessionCredentials)
 
 // Auto-extract code from callback URL (OpenAI/Gemini/Antigravity/Grok)
 // e.g., http://localhost:8085/callback?code=xxx...&state=...
@@ -1196,9 +1302,9 @@ const handleValidateRefreshToken = () => {
 }
 
 const handleImportCodexSession = () => {
-  if (codexSessionInput.value.trim()) {
-    emit('import-codex-session', codexSessionInput.value.trim())
-  }
+  if (props.loading || codexSessionFilesReading.value || codexSessionFileError.value) return
+  const content = [codexSessionInput.value.trim(), ...codexSessionFiles.value].filter(Boolean).join('\n')
+  if (content) emit('import-codex-session', content)
 }
 
 const handleImportCodexPAT = () => {
@@ -1227,13 +1333,14 @@ defineExpose({
   emailPassword: emailPasswordInput,
   inputMethod,
   reset: () => {
+    bpsLoginFlowRef.value?.reset()
     authCodeInput.value = ''
     oauthState.value = ''
     projectId.value = ''
     sessionKeyInput.value = ''
     refreshTokenInput.value = ''
     sessionTokenInput.value = ''
-    codexSessionInput.value = ''
+    clearCodexSessionCredentials()
     codexPATInput.value = ''
     ssoCookieInput.value = ''
     emailPasswordInput.value = ''

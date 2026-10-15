@@ -119,9 +119,12 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 	if excelErr != nil {
 		return excelErr
 	}
+	if s.cfg != nil && s.cfg.Gateway.OpenAIWS.ModeRouterV2Enabled && !s.shouldBridgeOpenAIWSHTTP(account, len(firstClientMessage), "") {
+		enableExcelWebSocket(ctx, firstClientMessage)
+	}
 	wsDecision := s.getOpenAIWSProtocolResolver().Resolve(account)
-	forceHTTPBridge := isExcelRequest(ctx) || account.Platform == PlatformGrok ||
-		(s.pluginManager != nil && s.pluginManager.ShouldRouteOpenAIOAuth(account))
+	forceHTTPBridge := (isExcelRequest(ctx) && !isExcelWebSocket(ctx)) || account.Platform == PlatformGrok ||
+		(!isExcelWebSocket(ctx) && s.pluginManager != nil && s.pluginManager.ShouldRouteOpenAIOAuth(account))
 	modeRouterV2Enabled := s != nil && s.cfg != nil && s.cfg.Gateway.OpenAIWS.ModeRouterV2Enabled
 	ingressMode := OpenAIWSIngressModeCtxPool
 	if modeRouterV2Enabled && !forceHTTPBridge {
@@ -167,6 +170,11 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 			)
 		}
 	}
+	if forceHTTPBridge {
+		if route := excelWSRoute(ctx); route != nil {
+			route.websocket = false
+		}
+	}
 	if !forceHTTPBridge && wsDecision.Transport != OpenAIUpstreamTransportResponsesWebsocketV2 {
 		return fmt.Errorf("websocket ingress requires ws_v2 transport, got=%s", wsDecision.Transport)
 	}
@@ -180,7 +188,7 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 		wsPath = "/v1/responses"
 	} else {
 		var err error
-		wsURL, err = s.buildOpenAIResponsesWSURL(account)
+		wsURL, err = s.buildOpenAIResponsesWSURLForContext(ctx, account)
 		if err != nil {
 			return fmt.Errorf("build ws url: %w", err)
 		}
@@ -479,6 +487,14 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 			stageMode1Request(c, account, trimmed)
 		}
 
+		if isExcelWebSocket(ctx) {
+			prepared, prepareErr := s.prepareExcelWebSocketPayload(ctx, c, account, token, normalized)
+			if prepareErr != nil {
+				return openAIWSClientPayload{}, prepareErr
+			}
+			normalized = prepared
+		}
+
 		return openAIWSClientPayload{
 			payloadRaw:               normalized,
 			accountIdentitySourceRaw: accountIdentitySourceRaw,
@@ -532,7 +548,7 @@ func (s *OpenAIGatewayService) ProxyResponsesWebSocketFromClient(
 		return err
 	}
 
-	useHTTPBridge := forceHTTPBridge || s.shouldBridgeOpenAIWSHTTP(account, firstPayload.payloadBytes, firstPayload.previousResponseID)
+	useHTTPBridge := forceHTTPBridge || (!isExcelWebSocket(ctx) && s.shouldBridgeOpenAIWSHTTP(account, firstPayload.payloadBytes, firstPayload.previousResponseID))
 	turnState := strings.TrimSpace(c.GetHeader(openAIWSTurnStateHeader))
 	stateStore := s.getOpenAIWSStateStore()
 	groupID := getOpenAIGroupIDFromContext(c)

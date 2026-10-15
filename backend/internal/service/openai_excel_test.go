@@ -59,6 +59,7 @@ func TestExcelConfigRejectsWrongTransportPath(t *testing.T) {
 	require.Error(t, err)
 }
 func excelSetRequestGroup(s *astraForwardSetup, group int64) {
+	excelAttachBPS(s.account)
 	s.c.Set("api_key", &APIKey{ID: 71, GroupID: &group})
 }
 func excelSetResponse(s *astraForwardSetup, model string) {
@@ -83,7 +84,7 @@ func TestExcelSelectedAccountResponses(t *testing.T) {
 				req := s.upstream.lastReq
 				require.Equal(t, "http://excel-sub2api:8000/internal/v1/responses", req.URL.String())
 				require.Equal(t, "Bearer "+strings.Repeat("k", 48), req.Header.Get("Authorization"))
-				require.Equal(t, "oauth-token", req.Header.Get("X-Sub2-Excel-Access-Token"))
+				require.Equal(t, excelBPSToken(), req.Header.Get("X-Sub2-Excel-Access-Token"))
 				require.Equal(t, "chatgpt-acc", req.Header.Get("X-Sub2-Excel-Account-Id"))
 				require.Len(t, req.Header.Get("X-Sub2-Excel-Scope"), 64)
 				require.Equal(t, "", s.upstream.lastProxyURL)
@@ -122,7 +123,7 @@ func TestExcelScopeDiffersAcrossAccountsAndGroups(t *testing.T) {
 			require.NoError(t, err)
 			req, err := http.NewRequestWithContext(ctx, "POST", astraProCodexResponsesURL, strings.NewReader(`{"model":"gpt-6-sol"}`))
 			require.NoError(t, err)
-			req.Header.Set("Authorization", "Bearer oauth-token")
+			req.Header.Set("Authorization", "Bearer "+excelBPSToken())
 			_, handled, err := s.svc.forwardExcelHTTP(req, "http://account-proxy:8888", s.account)
 			require.NoError(t, err)
 			require.True(t, handled)

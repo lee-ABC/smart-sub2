@@ -1,0 +1,17 @@
+{
+  "name": "cpa-login-runtime",
+  "version": "1.0.0",
+  "description": "CPA extension login worker and enhanced panel gateway runtime",
+  "main": "gateway.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node gateway.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-tls-client": "2.1.0",
+    "tough-cookie": "4.1.4"
+  },
+  "private": true
+}

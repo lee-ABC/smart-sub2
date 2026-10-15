@@ -88,6 +88,10 @@ func (s *OpenAIGatewayService) buildOpenAIWSHeaders(
 	routingModel string,
 	routingServiceTier string,
 ) (http.Header, openAIWSSessionHeaderResolution, error) {
+	if isExcelWebSocket(ctx) {
+		headers, err := excelWebSocketHeaders(ctx, token)
+		return headers, resolveOpenAIWSSessionHeaders(c, promptCacheKey), err
+	}
 	headers := make(http.Header)
 	if account == nil || !account.IsOpenAIAgentIdentity() {
 		headers.Set("authorization", "Bearer "+token)

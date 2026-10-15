@@ -432,6 +432,8 @@ type ShadowOptions struct {
 }
 
 type UpdateAccountInput struct {
+	// BPSProfileOnly is an internal credential-import operation; no business fields are changed.
+	BPSProfileOnly        bool
 	Name                  string
 	Notes                 *string
 	Type                  string // Account type: oauth, setup-token, apikey

@@ -282,7 +282,9 @@ func redactAuthHeaderValue(v string) string {
 
 func safeHeaderValueForLog(key string, v string) string {
 	key = strings.ToLower(strings.TrimSpace(key))
-	if strings.HasPrefix(key, "x-sub2-excel-") { return "[redacted]" }
+	if strings.HasPrefix(key, "x-sub2-excel-") {
+		return "[redacted]"
+	}
 	switch key {
 	case "authorization", "x-api-key":
 		return redactAuthHeaderValue(v)
@@ -722,7 +724,7 @@ func (e *UpstreamFailoverError) IsCredentialFailure() bool {
 // credential failures from being misattributed to the selected account. Legacy
 // and inference failures retain their existing scheduler-health behavior.
 func (e *UpstreamFailoverError) ShouldReportAccountScheduleFailure() bool {
-	if e == nil || e.Reason == "account_traffic_limit" {
+	if e == nil || e.Reason == "account_traffic_limit" || e.Reason == "bps_ws_outcome_unknown" {
 		return false
 	}
 	return !e.IsCredentialFailure() || e.Scope == GatewayFailureScopeAccount

@@ -17,7 +17,8 @@ type ExcelRoutingConfig struct {
 	TransportKeyFile string            `json:"transport_key_file"`
 	GroupModes       map[string]string `json:"group_modes"`
 	WebSocketEnabled bool              `json:"websocket_enabled,omitempty"`
-	// CPA implements Responses over HTTP/SSE; downstream WS uses the existing HTTP bridge.
+	// CPA shares protocol/identity construction across SSE and upstream WS.
+	// The existing downstream WS bridge selects WS only when WebSocketEnabled.
 	TransportBackend string `json:"transport_backend,omitempty"`
 }
 

@@ -405,6 +405,29 @@ func buildOpenAIWSHTTPBridgeFailedEvent(responseID, model string, source []byte,
 	return body
 }
 
+// The marker is a private adapter receipt, not evidence supplied by the public
+// client or an arbitrary upstream. Bind it to the frozen CPA/WS route selected
+// for this bridge turn before changing any retry or account-health behavior.
+func bpsWSUpstreamStarted(ctx context.Context, response *http.Response) bool {
+	if ctx == nil || response == nil || response.Header.Get("X-Sub2-Excel-Upstream-Started") != "true" {
+		return false
+	}
+	bridge, _ := ctx.Value(excelWSBridgeTransportKey{}).(bool)
+	route, _ := ctx.Value(excelRequestRouteKey{}).(*excelRequestRoute)
+	return bridge && route != nil && route.config != nil && route.config.UsesCPAAdapter() && route.config.WebSocketEnabled
+}
+
+func bpsWSOutcomeUnknown() *UpstreamFailoverError {
+	const message = "Basis Points WebSocket send was attempted; outcome unknown, automatic replay blocked"
+	body, _ := json.Marshal(map[string]any{"error": map[string]string{"type": "bps_ws_outcome_unknown", "message": message}})
+	return &UpstreamFailoverError{
+		StatusCode: http.StatusBadGateway, ClientStatusCode: http.StatusBadGateway,
+		Stage: GatewayFailureStageInference, Scope: GatewayFailureScopeRequest,
+		Reason: "bps_ws_outcome_unknown", NextAccountAction: NextAccountStop,
+		RequestScopedTransient: true, ClientMessage: message, ResponseBody: body,
+	}
+}
+
 func (s *OpenAIGatewayService) proxyOpenAIWSHTTPBridgeTurn(
 	ctx context.Context,
 	c *gin.Context,
@@ -442,6 +465,7 @@ func (s *OpenAIGatewayService) proxyOpenAIWSHTTPBridgeTurn(
 	if err != nil {
 		return nil, err
 	}
+	ctx = context.WithValue(ctx, excelWSBridgeTransportKey{}, true)
 	// Each bridge turn can select another model. Resolve that turn's profile
 	// rather than reusing the connection's initial BPS/native bearer.
 	if account.Platform == PlatformOpenAI && account.IsOpenAIOAuthLike() {
@@ -554,12 +578,22 @@ func (s *OpenAIGatewayService) proxyOpenAIWSHTTPBridgeTurn(
 	turnStart := time.Now()
 	rejectedFieldRetryState := newOpenAIResponsesRejectedFieldRetryState(body)
 	var resp *http.Response
+	bpsWSStarted := false
 	for {
 		upstreamReq, buildErr := buildUpstreamRequest(body)
 		if buildErr != nil {
 			return nil, buildErr
 		}
 		resp, err = s.doOpenAIUpstream(upstreamReq, proxyURL, account)
+		bpsWSStarted = bpsWSUpstreamStarted(ctx, resp)
+		if bpsWSStarted && (err != nil || resp.StatusCode < 200 || resp.StatusCode >= 300) {
+			if resp.Body != nil {
+				_ = resp.Body.Close()
+			}
+			// A partial frame write is also an unknown outcome. Do not run the
+			// normal rejected-field retry or credential failure classifiers.
+			return nil, bpsWSOutcomeUnknown()
+		}
 		if err != nil {
 			if turn == 1 {
 				return nil, s.handleOpenAIUpstreamTransportError(ctx, c, account, err, true)
@@ -795,6 +829,12 @@ func (s *OpenAIGatewayService) proxyOpenAIWSHTTPBridgeTurn(
 			markOpenAICyberPolicyEvent(c, upstreamMessage, http.StatusOK, &usage)
 		}
 		imageCounter.AddSSEData(upstreamMessage)
+		if bpsWSStarted && (eventType == "error" || eventType == "response.failed") {
+			// CPA may append a retry hint to a zero-output read failure. The
+			// private send receipt wins even when no semantic output arrived.
+			upstreamTerminalEvent = "response.failed"
+			return resultWithUsage(), bpsWSOutcomeUnknown()
+		}
 
 		if needModelReplace && len(mappedModelBytes) > 0 && openAIWSEventMayContainModel(eventType) && strings.Contains(trimmedData, mappedModel) {
 			upstreamMessage = replaceOpenAIWSMessageModel(upstreamMessage, mappedModel, originalModel)
@@ -892,6 +932,9 @@ func (s *OpenAIGatewayService) proxyOpenAIWSHTTPBridgeTurn(
 				isOpenAIWSTerminalEvent(eventType)
 			if stageBeforeSemanticOutput && !commitStagedMessages {
 				if pendingClientMessageBytes+int64(len(clientMessage)) > openAIFirstOutputStageMaxBytes {
+					if bpsWSStarted {
+						return resultWithUsage(), bpsWSOutcomeUnknown()
+					}
 					return nil, s.newOpenAIStreamFailoverError(
 						c,
 						account,
@@ -979,10 +1022,16 @@ func (s *OpenAIGatewayService) proxyOpenAIWSHTTPBridgeTurn(
 	}
 	if err := scanner.Err(); err != nil {
 		streamErr := fmt.Errorf("read upstream http bridge stream: %w", err)
+		if bpsWSStarted {
+			return resultWithUsage(), bpsWSOutcomeUnknown()
+		}
 		if turn == 1 && !wroteDownstream {
 			return nil, s.handleOpenAIUpstreamTransportError(ctx, c, account, streamErr, true)
 		}
 		return resultWithUsage(), streamErr
+	}
+	if bpsWSStarted {
+		return resultWithUsage(), bpsWSOutcomeUnknown()
 	}
 	terminalErr := errors.New("upstream http bridge stream ended before terminal event")
 	if sawDone {

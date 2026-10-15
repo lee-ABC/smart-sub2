@@ -39,14 +39,18 @@ type message struct {
 	err    string
 }
 type invocation struct {
-	accountID        int64
-	requestedModel   string
-	upstreamAttempts atomic.Uint32
-	ctx              context.Context
-	cancel           context.CancelFunc
-	client           *http.Client
-	events           chan message
-	closeOnce        sync.Once
+	accountID         int64
+	requestedModel    string
+	upstreamTransport string
+	wsMu              sync.Mutex
+	wsSent            map[[32]byte]bool
+	wsSendAttempted   atomic.Bool
+	upstreamAttempts  atomic.Uint32
+	ctx               context.Context
+	cancel            context.CancelFunc
+	client            *http.Client
+	events            chan message
+	closeOnce         sync.Once
 }
 type upstream struct {
 	owner string
@@ -60,6 +64,7 @@ func (u *upstream) close() { u.once.Do(func() { _ = u.body.Close() }) }
 type Adapter struct {
 	identityMode   string
 	identityLogger *log.Logger
+	wsDial         wsDialFunc
 	key            string
 	service        *basispoints.Service
 	mu             sync.Mutex
@@ -138,7 +143,7 @@ func (a *Adapter) Shutdown() {
 func (a *Adapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	if (r.URL.Path == "/health" || r.URL.Path == "/healthz") && r.Method == http.MethodGet {
-		writeJSON(w, http.StatusOK, map[string]any{"status": "ok", "upstream_commit": UpstreamCommit, "client_identity_mode": a.identityMode, "identity_logging": a.identityLogger != nil})
+		writeJSON(w, http.StatusOK, map[string]any{"status": "ok", "upstream_commit": UpstreamCommit, "client_identity_mode": a.identityMode, "identity_logging": a.identityLogger != nil, "upstream_transports": []string{"sse", "websocket"}, "websocket_replay": false})
 		return
 	}
 	if r.URL.Path != "/internal/v1/responses" {
@@ -153,6 +158,14 @@ func (a *Adapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	auth := strings.TrimSpace(r.Header.Get("Authorization"))
 	if subtle.ConstantTimeCompare([]byte(auth), []byte("Bearer "+a.key)) != 1 {
 		writeError(w, 401, "unauthorized", "invalid private transport authorization")
+		return
+	}
+	upstreamTransport := strings.TrimSpace(r.Header.Get("X-Sub2-Excel-Transport"))
+	if upstreamTransport == "" {
+		upstreamTransport = "sse"
+	}
+	if upstreamTransport != "sse" && upstreamTransport != "websocket" {
+		writeError(w, 400, "invalid_transport", "unsupported private upstream transport")
 		return
 	}
 	token := strings.TrimSpace(r.Header.Get("X-Sub2-Excel-Access-Token"))
@@ -200,7 +213,7 @@ func (a *Adapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	client := &http.Client{Transport: transport, Timeout: 300 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	ctx, cancel := context.WithTimeout(r.Context(), 300*time.Second)
-	call := &invocation{accountID: id, requestedModel: body.Model, ctx: ctx, cancel: cancel, client: client, events: make(chan message, 8)}
+	call := &invocation{accountID: id, requestedModel: body.Model, upstreamTransport: upstreamTransport, ctx: ctx, cancel: cancel, client: client, events: make(chan message, 8)}
 	callbackID := randomID()
 	a.mu.Lock()
 	a.calls[callbackID] = call
@@ -214,6 +227,11 @@ func (a *Adapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		method = "executor.execute_stream"
 	}
 	result, err := a.service.Handle(method, payload)
+	// Trusted private response marker survives core error mapping. A partial WS
+	// write may already have executed upstream and must not trigger backend replay.
+	if call.upstreamTransport == "websocket" && call.wsSendAttempted.Load() {
+		w.Header().Set("X-Sub2-Excel-Upstream-Started", "true")
+	}
 	if err != nil {
 		a.writeAPIError(w, err, token)
 		return
@@ -388,14 +406,22 @@ func (a *Adapter) host(method string, payload any, out any) error {
 		}
 		req.Header = p.Headers.Clone()
 		trace := a.identityTrace(call, p.Callback, p.Body)
-		a.logIdentity(trace, "bps.upstream.request", 0, 0)
-		started := time.Now()
-		response, err := call.client.Do(req)
+		var response *http.Response
+		if call.upstreamTransport == "websocket" {
+			response, err = a.websocketResponse(call, req, p.Body, method == "host.http.do_stream", trace)
+		} else {
+			a.logIdentity(trace, "bps.upstream.request", 0, 0)
+			started := time.Now()
+			response, err = call.client.Do(req)
+			if err != nil {
+				a.logIdentity(trace, "bps.upstream.transport_error", 0, time.Since(started).Milliseconds())
+			} else {
+				a.logIdentity(trace, "bps.upstream.response", response.StatusCode, time.Since(started).Milliseconds())
+			}
+		}
 		if err != nil {
-			a.logIdentity(trace, "bps.upstream.transport_error", 0, time.Since(started).Milliseconds())
 			return errors.New("selected-account upstream connection failed")
 		}
-		a.logIdentity(trace, "bps.upstream.response", response.StatusCode, time.Since(started).Milliseconds())
 		if method == "host.http.do" {
 			defer response.Body.Close()
 			raw, err := io.ReadAll(io.LimitReader(response.Body, maxBody+1))

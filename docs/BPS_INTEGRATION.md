@@ -84,11 +84,20 @@ identity metadata, requested/upstream model, response status and header latency.
 They exclude tokens, cookies, prompt/tool content, pepper and raw error text.
 `/healthz` exposes the configured identity mode and whether logging is enabled.
 
-The upstream transport is HTTPS/SSE, not WebSocket. Thread mode does not change
-native/BPS route selection. HTTP200 at header arrival is not stream completion;
-validate the terminal event separately. Two bounded live parallel checks in the
-deployed environment completed successfully; this is not proof that all403s,
-concurrency issues or model mismatches are resolved.
+Thread mode does not choose a transport. With the existing CPA backend and
+`websocket_enabled` switch, a trusted incoming Responses WebSocket uses the
+existing Sub2 HTTP bridge and then the adapter's **upstream WSS** transport.
+Ordinary HTTP Responses/Chat/Messages retain the SSE upstream. Both routes share
+one CPA service/identity algorithm and turn cache; switching transport does not
+create another task/turn namespace. The user-selected model and reasoning effort
+are passed through the same preparation logic, not hardcoded to capture examples.
+WS connection/request/recovery IDs remain separate from task/turn identity.
+
+WS control frames are consumed privately. HTTP200/WS101 do not prove completion;
+validate `response.completed` separately. The first WS implementation does not
+perform automatic resume/replay: a trusted send-attempt marker stops failover for
+unknown post-send outcomes. This does not establish that all403s or model
+mismatches are resolved. Existing native routing and pre-send policy are retained.
 
 ## Verification commands
 

@@ -111,6 +111,10 @@ func newUtlsRoundTripper(proxyURL string) (*utlsRoundTripper, error) {
 }
 
 func (t *utlsRoundTripper) createConnection(ctx context.Context, host, addr string) (*tls.UConn, error) {
+	return t.createConnectionWithALPN(ctx, host, addr, nil)
+}
+
+func (t *utlsRoundTripper) createConnectionWithALPN(ctx context.Context, host, addr string, protocols []string) (*tls.UConn, error) {
 	contextDialer, ok := t.dialer.(proxy.ContextDialer)
 	if !ok {
 		return nil, fmt.Errorf("utls: dialer does not support context cancellation")
@@ -122,6 +126,18 @@ func (t *utlsRoundTripper) createConnection(ctx context.Context, host, addr stri
 
 	tlsConfig := &tls.Config{ServerName: host, ClientSessionCache: t.sessionCache, RootCAs: utlsRootCAs}
 	tlsConn := tls.UClient(conn, tlsConfig, tls.HelloChrome_Auto)
+	if len(protocols) > 0 {
+		if err := tlsConn.BuildHandshakeState(); err != nil {
+			_ = conn.Close()
+			return nil, errors.New("cannot prepare browser TLS handshake")
+		}
+		for _, extension := range tlsConn.Extensions {
+			if alpn, ok := extension.(*tls.ALPNExtension); ok {
+				alpn.AlpnProtocols = append([]string(nil), protocols...)
+			}
+		}
+
+	}
 
 	if errHandshake := tlsConn.HandshakeContext(ctx); errHandshake != nil {
 		if errors.Is(errHandshake, context.Canceled) || errors.Is(errHandshake, context.DeadlineExceeded) {

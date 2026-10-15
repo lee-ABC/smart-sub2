@@ -22,6 +22,9 @@ type excelRequestRoute struct {
 }
 type excelRequestRouteKey struct{}
 
+// Set only by the trusted downstream WebSocket bridge, never a public header.
+type excelWSBridgeTransportKey struct{}
+
 // Freeze outbound selection per account/model attempt. A concurrent group edit
 // must not choose one credential and another transport for the same request.
 type excelRequestSelectionKey struct{}
@@ -123,6 +126,10 @@ func (s *OpenAIGatewayService) forwardExcelHTTP(request *http.Request, proxyURL 
 	headers := http.Header{}
 	headers.Set("Authorization", "Bearer "+serviceKey)
 	headers.Set("Content-Type", "application/json")
+	if wsIngress, _ := request.Context().Value(excelWSBridgeTransportKey{}).(bool); wsIngress && route.config.UsesCPAAdapter() && route.config.WebSocketEnabled {
+		headers.Set("X-Sub2-Excel-Transport", "websocket")
+	}
+
 	headers.Set("Accept", request.Header.Get("Accept"))
 	headers.Set("X-Sub2-Excel-Access-Token", token)
 	headers.Set("X-Sub2-Excel-Account-Id", workspace)
@@ -149,7 +156,10 @@ func (s *OpenAIGatewayService) forwardExcelHTTP(request *http.Request, proxyURL 
 	if err != nil && !errors.Is(err, context.Canceled) {
 		return nil, true, &excelTransportError{}
 	}
-	if resp != nil && resp.Header.Get("X-Sub2-Excel-Failure") == "transport" {
+	// Preserve the trusted post-send marker for the WS bridge's replay barrier.
+	// A public header cannot select this path: headers were rebuilt above.
+	wsOutcomeUnknown := resp != nil && headers.Get("X-Sub2-Excel-Transport") == "websocket" && resp.Header.Get("X-Sub2-Excel-Upstream-Started") == "true"
+	if resp != nil && resp.Header.Get("X-Sub2-Excel-Failure") == "transport" && !wsOutcomeUnknown {
 		if resp.Body != nil {
 			resp.Body.Close()
 		}

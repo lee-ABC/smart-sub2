@@ -21,6 +21,7 @@ rejects a build without it. See UPSTREAM.md for the compatibility rationale.
 
 - `POST /internal/v1/responses`: Responses JSON, streaming or nonstreaming.
 - `Authorization: Bearer <private transport key>`.
+- Optional trusted `X-Sub2-Excel-Transport: websocket` selects upstream WS; absent/`sse` keeps HTTP/SSE.
 - Selected BPS AT: `X-Sub2-Excel-Access-Token` (never native AT).
 - JWT workspace: `X-Sub2-Excel-Account-Id`.
 - JWT user: `X-Sub2-Excel-Account-User-Id`.
@@ -81,6 +82,30 @@ status/latency. IDs and models are validated before logging. No bearer/refresh
 tokens, cookies, prompts, tool outputs, pepper, or raw transport errors are logged
 by these events. Response-header HTTP 200 is not proof of stream completion.
 
-The adapter's upstream is HTTPS/SSE (`transport: https_sse`); this option does not
-switch the upstream to WebSocket or change Sub2's native/BPS routing selection.
+Thread identity itself is transport-independent. HTTP callers keep HTTPS/SSE
+(`transport: https_sse`); the trusted Sub2 WS bridge can select upstream WSS
+(`transport: wss`) through the private transport header. Both use the same CPA
+request preparation, credential scope, task ID and turn cache. Model and reasoning
+effort are taken from that prepared request, never from the HAR example.
 See `docs/bps-thread-identity-deployment.md` for the bounded live checks on 40:8890.
+
+## Upstream WebSocket contract
+
+The WS transport reuses existing x/net WebSocket and Chrome uTLS dependencies.
+HTTP/1.1 ALPN is confined to WS; the SSE HTTP/2 pool remains unchanged. The exact
+BPS destination and selected-account proxy remain enforced. The observed public
+subprotocol is `responses`, with a private `openai-bearer.<BPS AT>` subprotocol.
+No authentication material, cookies, prompts, tool outputs or resume tokens are
+logged. Logs add actual `reasoning_effort`, transport, and safe WS request UUID.
+
+Only transport fields are added: `type: response.create`, a fresh
+`basispoints_request_id`, a fresh opaque resume token, and connection affinity.
+Task/turn/iteration are not regenerated in the WS layer. Model aliases and effort
+normalization follow the unchanged CPA/SSE path. Private WS controls are consumed
+before existing response/tool normalization; they never become user turns.
+
+This is single-shot WS, not automatic reconnect/resume. A send attempt sets the
+trusted private `X-Sub2-Excel-Upstream-Started: true` response header. Partial
+writes, post-send disconnects or draining must not cause backend account failover
+or replay; the bridge treats marked outcomes as request-scoped and stops. Proven
+pre-send rejection and ordinary SSE/native behavior retain their existing policy.

@@ -93,6 +93,14 @@ create another task/turn namespace. The user-selected model and reasoning effort
 are passed through the same preparation logic, not hardcoded to capture examples.
 WS connection/request/recovery IDs remain separate from task/turn identity.
 
+BPS WS transport eligibility is scoped to the selected group, OAuth-like account,
+CPA backend, enabled BPS WS switch, and effective supported model. It does not
+require turning on native Codex WS globally. The original native transport checks
+remain authoritative for API-key accounts, other groups and unsupported models;
+priority, sticky selection and account concurrency gates are unchanged.
+Task identity uses the existing persisted configuration; the bounded turn cache
+is shared by both transports within one adapter process, not persisted on restart.
+
 WS control frames are consumed privately. HTTP200/WS101 do not prove completion;
 validate `response.completed` separately. The first WS implementation does not
 perform automatic resume/replay: a trusted send-attempt marker stops failover for

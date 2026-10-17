@@ -1,4 +1,4 @@
-FROM node:22-bookworm@sha256:363e1587494626837fa7f9a23bdb453d13b0ff3c67c705c2805cfc69c2d2fad7
+FROM node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392
 WORKDIR /srv/bps-login/runtime
 COPY runtime/package.json runtime/package-lock.json ./
 RUN npm ci --omit=dev --no-audit --no-fund

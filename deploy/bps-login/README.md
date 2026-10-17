@@ -13,6 +13,12 @@ npm run check-native   # local SDK/hash/dlopen probe; no account or network requ
 docker build -t sub2-bps-login:4aabe5c .
 ```
 
+The runtime uses a pinned Node22 Bookworm slim image, retaining glibc and the
+same paired native SDK. The packaged `--check-native` probe and login tests
+validate the slim image; no login credentials are needed for this probe. Budget
+for the **uncompressed** image size and Docker import scratch space, not only a
+compressed image transfer.
+
 Node22 on Linux x64 is required for the supplied pinned native asset. The image
 starts on private port8001. Mount a read-only secret file at
 `/run/secrets/login-key` (override `BPS_LOGIN_KEY_FILE`); key format is 32–256

@@ -287,3 +287,89 @@ func TestTransportPoolIsolatesCredentialsAndProxy(t *testing.T) {
 		t.Fatal("closed pool accepted request")
 	}
 }
+
+// A connected upstream can stall after sending HTTP 200. The adapter must end
+// the response protocol explicitly instead of leaving Sub2 with a bare EOF.
+func TestStreamingDeadlineHasFailedTerminalAndDoesNotReplay(t *testing.T) {
+	var attempts int
+	a := newTestAdapter(t, func(r *http.Request) (*http.Response, error) {
+		attempts++
+		return &http.Response{StatusCode: 200, Header: make(http.Header), Body: &cancelBody{ctx: r.Context(), closed: make(chan struct{})}}, nil
+	})
+	a.requestTimeout = 30 * time.Millisecond
+	w := httptest.NewRecorder()
+	a.ServeHTTP(w, testRequest(`{"model":"gpt-6-astra","input":"hi","stream":true}`))
+	body := w.Body.String()
+	if !strings.Contains(body, `"type":"response.failed"`) || !strings.Contains(body, `"code":"upstream_timeout"`) || !strings.Contains(body, "data: [DONE]") {
+		t.Fatalf("deadline lost its protocol terminal: %s", body)
+	}
+	if strings.Contains(body, `"type":"response.completed"`) || attempts != 1 {
+		t.Fatalf("deadline must not fabricate success or replay, attempts=%d body=%s", attempts, body)
+	}
+}
+
+func TestStreamingBrokenBodyHasFailedTerminal(t *testing.T) {
+	a := newTestAdapter(t, func(*http.Request) (*http.Response, error) {
+		return mockResponse(200, "event: response.created\ndata: {\"type\":\"response.created\",\"response\":{\"id\":\"resp_broken\",\"status\":\"in_progress\"}}\n\n"), nil
+	})
+	w := httptest.NewRecorder()
+	a.ServeHTTP(w, testRequest(`{"model":"gpt-6-astra","input":"hi","stream":true}`))
+	if !strings.Contains(w.Body.String(), `"type":"response.failed"`) || !strings.Contains(w.Body.String(), "data: [DONE]") {
+		t.Fatalf("broken stream has no failed terminal: %s", w.Body.String())
+	}
+	if strings.Contains(w.Body.String(), `"type":"response.completed"`) {
+		t.Fatal("broken stream reported success")
+	}
+}
+
+type finalChunkErrorBody struct {
+	raw  []byte
+	used bool
+}
+
+func (b *finalChunkErrorBody) Read(p []byte) (int, error) {
+	if b.used {
+		return 0, io.EOF
+	}
+	b.used = true
+	return copy(p, b.raw), io.ErrUnexpectedEOF
+}
+func (*finalChunkErrorBody) Close() error { return nil }
+
+func TestStreamingTerminalBytesSurviveAccompanyingReadError(t *testing.T) {
+	sse := "event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":" + finalResponse("gpt-6-astra", "OK") + "}\n\n"
+	a := newTestAdapter(t, func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: 200, Header: make(http.Header), Body: &finalChunkErrorBody{raw: []byte(sse)}}, nil
+	})
+	w := httptest.NewRecorder()
+	a.ServeHTTP(w, testRequest(`{"model":"gpt-6-astra","input":"hi","stream":true}`))
+	if !strings.Contains(w.Body.String(), `"type":"response.completed"`) || strings.Contains(w.Body.String(), `"type":"response.failed"`) {
+		t.Fatalf("valid terminal discarded with read error: %s", w.Body.String())
+	}
+}
+
+func TestQueuedCompletedWinsDeadline(t *testing.T) {
+	a := newTestAdapter(t, func(*http.Request) (*http.Response, error) { t.Fatal("must not replay"); return nil, nil })
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(-time.Second))
+	defer cancel()
+	call := &invocation{ctx: ctx, started: time.Now(), requestedModel: "gpt-6-astra", events: make(chan message, 2)}
+	call.events <- message{body: []byte("event: response.completed\ndata: {\"type\":\"response.completed\",\"response\":" + finalResponse("gpt-6-astra", "OK") + "}\n\ndata: [DONE]\n\n")}
+	call.events <- message{closed: true}
+	w := httptest.NewRecorder()
+	a.relayClientStream(w, testRequest(`{}`), call, "test", "synthetic-token")
+	if !strings.Contains(w.Body.String(), "response.completed") || strings.Contains(w.Body.String(), "response.failed") {
+		t.Fatal(w.Body.String())
+	}
+}
+
+func TestCancelledClientDoesNotReceiveSyntheticFailure(t *testing.T) {
+	a := newTestAdapter(t, func(*http.Request) (*http.Response, error) { t.Fatal("must not replay"); return nil, nil })
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	call := &invocation{ctx: ctx, started: time.Now(), events: make(chan message, 1)}
+	w := httptest.NewRecorder()
+	a.relayClientStream(w, testRequest(`{}`).WithContext(ctx), call, "test", "synthetic-token")
+	if w.Body.Len() != 0 {
+		t.Fatal(w.Body.String())
+	}
+}

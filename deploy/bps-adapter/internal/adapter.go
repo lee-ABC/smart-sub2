@@ -39,6 +39,10 @@ type message struct {
 	err    string
 }
 type invocation struct {
+	started           time.Time
+	upstreamBytes     atomic.Int64
+	firstReadMS       atomic.Int64
+	lastReadAt        atomic.Int64
 	accountID         int64
 	requestedModel    string
 	upstreamTransport string
@@ -53,15 +57,17 @@ type invocation struct {
 	closeOnce         sync.Once
 }
 type upstream struct {
-	owner string
-	body  io.ReadCloser
-	mu    sync.Mutex
-	once  sync.Once
+	readErr error // deferred until bytes from the preceding Read have been relayed
+	owner   string
+	body    io.ReadCloser
+	mu      sync.Mutex
+	once    sync.Once
 }
 
 func (u *upstream) close() { u.once.Do(func() { _ = u.body.Close() }) }
 
 type Adapter struct {
+	requestTimeout time.Duration // fixed production budget; tests use a short deadline
 	identityMode   string
 	identityLogger *log.Logger
 	wsDial         wsDialFunc
@@ -116,7 +122,7 @@ func New(key string, relayConfig []byte) (*Adapter, error) {
 			identityMode = strings.ToLower(strings.TrimSpace(mode))
 		}
 	}
-	a := &Adapter{identityMode: identityMode, key: strings.TrimSpace(key), service: basispoints.NewService(), calls: map[string]*invocation{}, streams: map[string]*upstream{}, transport: nil}
+	a := &Adapter{requestTimeout: 300 * time.Second, identityMode: identityMode, key: strings.TrimSpace(key), service: basispoints.NewService(), calls: map[string]*invocation{}, streams: map[string]*upstream{}, transport: nil}
 	pool := newTransportPool()
 	a.transport, a.closeTransports = pool.get, pool.close
 	a.service.SetHost(a.host)
@@ -212,8 +218,8 @@ func (a *Adapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	client := &http.Client{Transport: transport, Timeout: 300 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
-	ctx, cancel := context.WithTimeout(r.Context(), 300*time.Second)
-	call := &invocation{accountID: id, requestedModel: body.Model, upstreamTransport: upstreamTransport, ctx: ctx, cancel: cancel, client: client, events: make(chan message, 8)}
+	ctx, cancel := context.WithTimeout(r.Context(), a.requestTimeout)
+	call := &invocation{started: time.Now(), accountID: id, requestedModel: body.Model, upstreamTransport: upstreamTransport, ctx: ctx, cancel: cancel, client: client, events: make(chan message, 8)}
 	callbackID := randomID()
 	a.mu.Lock()
 	a.calls[callbackID] = call
@@ -247,35 +253,7 @@ func (a *Adapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write(response.Payload)
 		return
 	}
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("X-Accel-Buffering", "no")
-	w.WriteHeader(200)
-	controller := http.NewResponseController(w)
-	_ = controller.Flush()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case event := <-call.events:
-			if len(event.body) > 0 {
-				if _, err = w.Write(event.body); err != nil {
-					return
-				}
-				if err = controller.Flush(); err != nil {
-					return
-				}
-			}
-			if event.closed {
-				if event.err != "" {
-					safe := strings.ReplaceAll(event.err, token, "[REDACTED]")
-					data, _ := json.Marshal(map[string]any{"type": "error", "error": map[string]string{"type": "bps_stream_error", "message": safe}})
-					_, _ = fmt.Fprintf(w, "event: error\ndata: %s\n\n", data)
-					_ = controller.Flush()
-				}
-				return
-			}
-		}
-	}
+	a.relayClientStream(w, r, call, callbackID, token)
 }
 
 func validateCredential(token, workspace, user string) error {
@@ -466,13 +444,29 @@ func (a *Adapter) host(method string, payload any, out any) error {
 			stream.close()
 			return nil
 		}
-		if _, err := a.invocation(stream.owner); err != nil {
+		owner, err := a.invocation(stream.owner)
+		if err != nil {
 			return err
 		}
 		stream.mu.Lock()
 		defer stream.mu.Unlock()
 		buf := make([]byte, 32<<10)
-		n, err := stream.body.Read(buf)
+		n, err := 0, stream.readErr
+		if err == nil {
+			n, err = stream.body.Read(buf)
+		}
+		// io.Reader permits data and a non-EOF error in the same call. CPA
+		// checks chunk.error before consuming payload, so postpone the error
+		// until the next read. A valid terminal in these bytes wins the error.
+		if n > 0 && err != nil && err != io.EOF {
+			stream.readErr, err = err, nil
+		}
+		if n > 0 {
+			if owner.upstreamBytes.Add(int64(n)) == int64(n) {
+				owner.firstReadMS.Store(time.Since(owner.started).Milliseconds())
+			}
+			owner.lastReadAt.Store(time.Now().UnixNano())
+		}
 		message := ""
 		if err != nil && err != io.EOF {
 			message = "upstream stream read failed"

@@ -2814,18 +2814,30 @@ func (h *AccountHandler) GetAvailableModels(c *gin.Context) {
 			if !excel {
 				return native
 			}
-			models := append([]openai.Model(nil), native...)
+			// Prefer the selected group's complete Excel catalog in the test UI.
+			models := make([]openai.Model, 0, len(ids)+len(native))
 			seen := map[string]bool{}
-			for _, m := range models {
-				seen[m.ID] = true
-			}
 			for _, id := range ids {
-				if !seen[id] {
-					models = append(models, openai.Model{ID: id, Object: "model", Type: "model", DisplayName: id})
-					seen[id] = true
+				models = append(models, openai.Model{ID: id, Object: "model", Type: "model", DisplayName: id})
+				seen[id] = true
+			}
+			for _, model := range native {
+				if !seen[model.ID] {
+					models = append(models, model)
+					seen[model.ID] = true
 				}
 			}
 			return models
+		}
+
+		_, hasBPS := account.Credentials[service.BPSCredentialKey]
+		if excel && hasBPS && !account.IsOpenAIAgentIdentity() &&
+			strings.TrimSpace(account.GetOpenAIAccessToken()) == "" &&
+			strings.TrimSpace(account.GetOpenAIRefreshToken()) == "" {
+			// Never advertise native-only models for a BPS-only credential.
+			// Native groups, API keys, and dual profiles retain their behavior.
+			response.Success(c, mergeModels(nil))
+			return
 		}
 
 		// Prefer the shared, account-keyed upstream catalog. If discovery fails,

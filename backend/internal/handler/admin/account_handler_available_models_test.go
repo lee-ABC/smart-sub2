@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -525,4 +527,69 @@ func TestAccountHandlerSyncUpstreamModels_MetadataEnrichmentFailureReturnsWarnin
 	require.Equal(t, []string{"x-preview-f-free"}, resp.Data.Models)
 	require.Len(t, resp.Data.Warnings, 1)
 	require.Equal(t, "upstream_model_metadata_incomplete", resp.Data.Warnings[0].Code)
+}
+
+func TestAccountHandlerGetAvailableModels_ExcelCatalogMatchesCredentialCapability(t *testing.T) {
+	dir := t.TempDir()
+	key := filepath.Join(dir, "key")
+	require.NoError(t, os.WriteFile(key, []byte(strings.Repeat("k", 48)), 0600))
+	cfg := filepath.Join(dir, "excel.json")
+	raw, err := json.Marshal(service.ExcelRoutingConfig{GatewayURL: "http://adapter:8000/internal/v1", TransportKeyFile: key, GroupModes: map[string]string{"66": "excel"}, TransportBackend: "cpa"})
+	require.NoError(t, err)
+	require.NoError(t, os.WriteFile(cfg, raw, 0600))
+	t.Setenv("SUB2_EXCEL_CONFIG_FILE", cfg)
+	for _, tc := range []struct {
+		name, at, rt, kind, group string
+		wantNative, wantExcel     bool
+	}{
+		{"bps only", "", "", service.AccountTypeOAuth, "66", false, true},
+		{"dual credentials", "native-at", "native-rt", service.AccountTypeOAuth, "66", true, true},
+		{"refreshable native", "", "native-rt", service.AccountTypeOAuth, "66", true, true},
+		{"native group", "native-at", "native-rt", service.AccountTypeOAuth, "67", true, false},
+		{"api key stays native", "", "", service.AccountTypeAPIKey, "66", true, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			credentials := map[string]any{service.BPSCredentialKey: map[string]any{"access_token": "synthetic-bps"}, "model_mapping": map[string]any{"gpt-5.5": "gpt-5.5"}}
+			if tc.at != "" {
+				credentials["access_token"] = tc.at
+			}
+			if tc.rt != "" {
+				credentials["refresh_token"] = tc.rt
+			}
+			if tc.kind == service.AccountTypeAPIKey {
+				credentials["api_key"] = "synthetic-key"
+			}
+			svc := &availableModelsAdminService{stubAdminService: newStubAdminService(), account: service.Account{ID: 42, Platform: service.PlatformOpenAI, Type: tc.kind, Status: service.StatusActive, GroupIDs: []int64{66, 67}, Credentials: credentials}}
+			router := setupAvailableModelsRouter(svc)
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, httptest.NewRequest("GET", "/api/v1/admin/accounts/42/models?group_id="+tc.group, nil))
+			require.Equal(t, 200, rec.Code, rec.Body.String())
+			var response struct {
+				Data []struct {
+					ID string `json:"id"`
+				} `json:"data"`
+			}
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &response))
+			ids := []string{}
+			seen := map[string]bool{}
+			for _, m := range response.Data {
+				ids = append(ids, m.ID)
+				seen[m.ID] = true
+			}
+			if tc.wantNative {
+				require.Contains(t, ids, "gpt-5.5")
+			} else {
+				require.NotContains(t, ids, "gpt-5.5")
+			}
+			if tc.wantExcel {
+				require.Equal(t, "gpt-6-sol", ids[0])
+				for _, id := range service.ExcelModelIDs() {
+					require.Contains(t, ids, id)
+				}
+			} else {
+				require.NotContains(t, ids, "gpt-6.1-sol")
+			}
+			require.Equal(t, len(ids), len(seen))
+		})
+	}
 }

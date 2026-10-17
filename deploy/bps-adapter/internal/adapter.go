@@ -67,7 +67,7 @@ type upstream struct {
 func (u *upstream) close() { u.once.Do(func() { _ = u.body.Close() }) }
 
 type Adapter struct {
-	requestTimeout time.Duration // fixed production budget; tests use a short deadline
+	requestTimeout time.Duration // shared bounded engine, context and HTTP budget
 	identityMode   string
 	identityLogger *log.Logger
 	wsDial         wsDialFunc
@@ -93,6 +93,17 @@ func New(key string, relayConfig []byte) (*Adapter, error) {
 			return nil, errors.New("invalid relay configuration")
 		}
 	}
+	budget := struct {
+		TimeoutSeconds int `yaml:"timeout_seconds"`
+	}{TimeoutSeconds: 300}
+	if len(relayConfig) > 0 {
+		if err := yaml.Unmarshal(relayConfig, &budget); err != nil {
+			return nil, errors.New("timeout_seconds must be an integer between 10 and 1800")
+		}
+	}
+	if budget.TimeoutSeconds < 10 || budget.TimeoutSeconds > 1800 {
+		return nil, errors.New("timeout_seconds must be between 10 and 1800")
+	}
 	mappings := map[string]string{}
 	for _, model := range models {
 		mappings[model] = model
@@ -110,7 +121,7 @@ func New(key string, relayConfig []byte) (*Adapter, error) {
 	cfg["quota_sample_seconds"] = 0
 	cfg["downgrade_guard_enabled"] = false
 	cfg["public_base_url"] = ""
-	cfg["timeout_seconds"] = 300
+	cfg["timeout_seconds"] = budget.TimeoutSeconds
 	cfg["max_response_bytes"] = maxBody
 	configYAML, err := yaml.Marshal(cfg)
 	if err != nil {
@@ -122,7 +133,7 @@ func New(key string, relayConfig []byte) (*Adapter, error) {
 			identityMode = strings.ToLower(strings.TrimSpace(mode))
 		}
 	}
-	a := &Adapter{requestTimeout: 300 * time.Second, identityMode: identityMode, key: strings.TrimSpace(key), service: basispoints.NewService(), calls: map[string]*invocation{}, streams: map[string]*upstream{}, transport: nil}
+	a := &Adapter{requestTimeout: time.Duration(budget.TimeoutSeconds) * time.Second, identityMode: identityMode, key: strings.TrimSpace(key), service: basispoints.NewService(), calls: map[string]*invocation{}, streams: map[string]*upstream{}, transport: nil}
 	pool := newTransportPool()
 	a.transport, a.closeTransports = pool.get, pool.close
 	a.service.SetHost(a.host)
@@ -132,6 +143,9 @@ func New(key string, relayConfig []byte) (*Adapter, error) {
 	}
 	return a, nil
 }
+
+// RequestTimeout also aligns the private server write deadline with the engine.
+func (a *Adapter) RequestTimeout() time.Duration { return a.requestTimeout }
 
 func (a *Adapter) Shutdown() {
 	a.mu.Lock()
@@ -217,7 +231,7 @@ func (a *Adapter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 400, "invalid_proxy", "selected-account proxy is invalid")
 		return
 	}
-	client := &http.Client{Transport: transport, Timeout: 300 * time.Second, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+	client := &http.Client{Transport: transport, Timeout: a.requestTimeout, CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	ctx, cancel := context.WithTimeout(r.Context(), a.requestTimeout)
 	call := &invocation{started: time.Now(), accountID: id, requestedModel: body.Model, upstreamTransport: upstreamTransport, ctx: ctx, cancel: cancel, client: client, events: make(chan message, 8)}
 	callbackID := randomID()

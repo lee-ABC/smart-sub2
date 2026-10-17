@@ -39,7 +39,7 @@ func main() {
 	if addr == "" {
 		addr = ":8000"
 	}
-	server := &http.Server{Addr: addr, Handler: a, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: 310 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 256 << 10}
+	server := &http.Server{Addr: addr, Handler: a, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: a.RequestTimeout() + 10*time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 256 << 10}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	go func() {

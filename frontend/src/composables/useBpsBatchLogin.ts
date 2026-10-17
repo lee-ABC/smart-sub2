@@ -66,7 +66,7 @@ export function useBpsBatchLogin(options: {
     if ((row.job && row.job.id !== value.id) || !Number.isFinite(expiry(value))) throw new Error('INVALID_LOGIN_RESPONSE')
     const previousChallenge = row.job?.challenge_kind
     // Explicit public projection: never retain arbitrary server response fields.
-    row.job = { id: value.id, status: value.status, phase: value.phase, code: value.code, expires_at: value.expires_at, challenge_kind: value.challenge_kind,
+    row.job = { id: value.id, status: value.status, phase: value.phase, phase_elapsed_ms: value.phase_elapsed_ms, total_elapsed_ms: value.total_elapsed_ms, code: value.code, expires_at: value.expires_at, challenge_kind: value.challenge_kind,
       workspace_choices: value.workspace_choices?.map(choice => ({ id: choice.id, name: choice.name, kind: choice.kind })),
       preview: value.preview ? { email: value.preview.email, workspace_id: value.preview.workspace_id, plan_type: value.preview.plan_type, expires_at: value.preview.expires_at } : undefined }
     row.state = value.status

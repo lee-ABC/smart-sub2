@@ -78,7 +78,13 @@ function startBatch() {
 function clear() { input.value = ''; workspaceId.value = ''; preference.value = 'team_first'; batch.reset() }
 const statusKeys: Record<string, string> = { queued: 'bpsBatchQueued', starting: 'bpsStatusRunning', running: 'bpsStatusRunning', awaiting_input: 'bpsStatusAwaitingInput', ready: 'bpsStatusReady', completed: 'bpsStatusCompleted', failed: 'bpsStatusFailed', cancelled: 'bpsStatusCancelled', expired: 'bpsStatusExpired', unknown: 'bpsBatchUnknownStatus' }
 const importKeys: Record<string, string> = { importing: 'bpsLoginImporting', imported: 'bpsBatchImported', skipped: 'bpsBatchSkipped', failed: 'bpsBatchImportFailed', unknown: 'bpsBatchUnknownStatus' }
-const rowStatus = (row: BpsBatchRow) => t(key + (importKeys[row.importState] || statusKeys[row.state] || 'bpsStatusFailed'))
+const phaseKeys: Record<string, string> = { session: 'bpsPhaseSession', email: 'bpsPhaseEmail', password: 'bpsPhasePassword', mfa: 'bpsPhaseMfa', email_otp: 'bpsPhaseEmailOtp', authorization: 'bpsPhaseAuthorization', exchange: 'bpsPhaseExchange', validate: 'bpsPhaseValidate' }
+const rowStatus = (row: BpsBatchRow) => {
+  const base = t(key + (importKeys[row.importState] || statusKeys[row.state] || 'bpsStatusFailed'))
+  if (!['starting', 'running'].includes(row.state) || !row.job?.phase || !phaseKeys[row.job.phase]) return base
+  const elapsed = typeof row.job.phase_elapsed_ms === 'number' ? ` (${(row.job.phase_elapsed_ms / 1000).toFixed(1)}s)` : ''
+  return `${base} · ${t(key + phaseKeys[row.job.phase])}${elapsed}`
+}
 watch(() => props.proxyId, clear)
 onBeforeUnmount(() => { input.value = ''; batch.dispose() })
 defineExpose({ reset: clear })

@@ -22,6 +22,17 @@ test('ready result retained for idempotent import; status never includes credent
  assert.equal(store.cancel('1',created.id).status,'cancelled');assert.throws(()=>store.get('1',created.id),{code:'NOT_FOUND'});
 });
 
+
+
+test('status exposes bounded phase and total elapsed time and freezes on completion',async t=>{
+ let now=1000,progress,finish;
+ const store=make(t,{clock:()=>now,engineFor:()=>({login:async(_record,{onProgress})=>{progress=onProgress;return new Promise(resolve=>{finish=()=>resolve({credential:credential()});});}})});
+ const job=store.create('1',input);await tick();now=3500;
+ let status=store.status(store.get('1',job.id));assert.equal(status.phase_elapsed_ms,2500);assert.equal(status.total_elapsed_ms,2500);
+ progress({phase:'password',code:'PASSWORD_STARTED'});now=5100;status=store.status(store.get('1',job.id));assert.equal(status.phase,'password');assert.equal(status.phase_elapsed_ms,1600);assert.equal(status.total_elapsed_ms,4100);
+ finish();await settle(store,job.id);const frozen=store.status(store.get('1',job.id));now=9000;assert.deepEqual(store.status(store.get('1',job.id)),frozen);assert.equal(frozen.total_elapsed_ms,4100);
+});
+
 test('email OTP/workspace waits accept only current authorized choice',async t=>{
  const seen=[];const store=make(t,{engineFor:()=>({login:async(_r,options)=>{
   seen.push(await options.requestEmailCode({signal:options.signal}));

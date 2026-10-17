@@ -42,6 +42,8 @@ type bpsLoginPublicStatus struct {
 	ID               string              `json:"id"`
 	Status           string              `json:"status"`
 	Phase            string              `json:"phase"`
+	PhaseElapsedMS   int64               `json:"phase_elapsed_ms,omitempty"`
+	TotalElapsedMS   int64               `json:"total_elapsed_ms,omitempty"`
 	Code             string              `json:"code"`
 	Message          string              `json:"message"`
 	ExpiresAt        any                 `json:"expires_at,omitempty"`
@@ -226,6 +228,20 @@ func bpsLoginSafeExpiry(v any) any {
 	}
 	return nil
 }
+func bpsLoginSafeMillis(v any) int64 {
+	var n int64
+	switch value := v.(type) {
+	case float64:
+		n = int64(value)
+	case json.Number:
+		n, _ = value.Int64()
+	}
+	if n < 0 || n > 600000 {
+		return 0
+	}
+	return n
+}
+
 func bpsLoginChoice(s string, choices ...string) string {
 	for _, v := range choices {
 		if s == v {
@@ -363,7 +379,7 @@ func bpsLoginStatus(raw map[string]any, expectedID string) (bpsLoginPublicStatus
 	if state == "" {
 		return bpsLoginPublicStatus{}, &bpsLoginWorkerFailure{http.StatusBadGateway}
 	}
-	out := bpsLoginPublicStatus{ID: id, Status: state, Phase: bpsLoginChoice(str("phase"), "session", "email", "password", "mfa", "email_otp", "authorization", "exchange", "validate", "queued", "workspace", "success", "completed", "failed", "cancelled"), Code: bpsLoginSafeCode(str("code")), ExpiresAt: bpsLoginSafeExpiry(raw["expires_at"]), ChallengeKind: bpsLoginChoice(str("challenge_kind"), "email_otp", "workspace")}
+	out := bpsLoginPublicStatus{ID: id, Status: state, Phase: bpsLoginChoice(str("phase"), "session", "email", "password", "mfa", "email_otp", "authorization", "exchange", "validate", "queued", "workspace", "success", "completed", "failed", "cancelled"), PhaseElapsedMS: bpsLoginSafeMillis(raw["phase_elapsed_ms"]), TotalElapsedMS: bpsLoginSafeMillis(raw["total_elapsed_ms"]), Code: bpsLoginSafeCode(str("code")), ExpiresAt: bpsLoginSafeExpiry(raw["expires_at"]), ChallengeKind: bpsLoginChoice(str("challenge_kind"), "email_otp", "workspace")}
 	out.Message = map[string]string{"queued": "等待登录", "running": "正在登录", "awaiting_input": "需要补充验证信息", "ready": "登录完成，请确认导入", "completed": "登录完成", "failed": "登录失败，请检查账号或重新创建任务", "cancelled": "任务已取消", "expired": "任务已过期"}[state]
 	if choices, ok := raw["workspace_choices"].([]any); ok {
 		for _, choice := range choices {

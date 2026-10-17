@@ -52,7 +52,7 @@ func bpsLoginTestCall(t *testing.T, h func(*gin.Context), owner int64, method, i
 	return rec
 }
 func bpsLoginFixtureStatus() map[string]any {
-	return map[string]any{"id": bpsLoginFixtureID, "status": "ready", "phase": "validate", "code": "CREDENTIAL_VALIDATED", "expires_at": time.Now().Add(time.Minute).UTC().Format(time.RFC3339), "message": bpsLoginFixtureSecret, "access_token": bpsLoginFixtureSecret, "refresh_token": bpsLoginFixtureSecret, "preview": map[string]any{"email": "same@example.com", "workspace_id": "workspace", "plan_type": "team", "password": bpsLoginFixtureSecret}, "workspace_choices": []any{map[string]any{"id": "workspace", "name": "测试工作区", "kind": "unknown", "token": bpsLoginFixtureSecret}}}
+	return map[string]any{"id": bpsLoginFixtureID, "status": "ready", "phase": "validate", "phase_elapsed_ms": 1234, "total_elapsed_ms": 5678, "code": "CREDENTIAL_VALIDATED", "expires_at": time.Now().Add(time.Minute).UTC().Format(time.RFC3339), "message": bpsLoginFixtureSecret, "access_token": bpsLoginFixtureSecret, "refresh_token": bpsLoginFixtureSecret, "preview": map[string]any{"email": "same@example.com", "workspace_id": "workspace", "plan_type": "team", "password": bpsLoginFixtureSecret}, "workspace_choices": []any{map[string]any{"id": "workspace", "name": "测试工作区", "kind": "unknown", "token": bpsLoginFixtureSecret}}}
 }
 func bpsLoginWriteJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -88,6 +88,8 @@ func TestBPSLoginStartUsesTrustedOwnerAndServerProxyAndRedacts(t *testing.T) {
 	require.NotContains(t, rec.Body.String(), bpsLoginFixtureSecret)
 	require.Contains(t, rec.Body.String(), "CREDENTIAL_VALIDATED")
 	require.Contains(t, rec.Body.String(), `"phase":"validate"`)
+	require.Contains(t, rec.Body.String(), `"phase_elapsed_ms":1234`)
+	require.Contains(t, rec.Body.String(), `"total_elapsed_ms":5678`)
 	require.Contains(t, rec.Body.String(), `"kind":"unknown"`)
 	rec = bpsLoginTestCall(t, h.StartBPSLogin, 7, "POST", "", `{"email":"same@example.com","password":"fake-password","proxy_url":"http://attacker"}`)
 	require.Equal(t, 400, rec.Code)

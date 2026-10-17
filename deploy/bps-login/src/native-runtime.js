@@ -49,6 +49,9 @@ export async function createNativeRuntime({runtimeRoot=RUNTIME_ROOT,factoryLoade
  const requireRuntime=createRequire(resolve(runtimeRoot,'package.json'));
  const bootstrap=requireRuntime('./src/tlsClientBootstrap.js');
  const tls=dependencies?.tls||bootstrap.requireTlsClient();
+ // Initialize the native TLS engine while the helper starts, so the first login
+ // does not pay its one-time loader cost. This performs no account request.
+ if(typeof tls.initTLS==='function'){try{await tls.initTLS();}catch{/* First real Session construction retains the existing fallback path. */}}
  const rtClientIdentifier=dependencies?.rtClientIdentifier||requireRuntime('./src/tlsProfile.js').rtClientIdentifier;
  const headerOrderFor=dependencies?.headerOrderFor||requireRuntime('./src/chromeHeaderOrder.js').headerOrderFor;
  return {

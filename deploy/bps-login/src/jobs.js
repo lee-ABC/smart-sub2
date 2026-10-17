@@ -31,11 +31,11 @@ export class JobStore{
  sweep(){for(const job of this.jobs.values())if(this.clock()>=job.expires)this.erase(job);}
  erase(job){job.controller.abort();if(job.pending){job.pending.reject(err('CANCELLED'));job.pending=null;}job.credential=null;if(job.record){job.record.password='';job.record.totpSecret='';job.record.proxyUrl='';}job.record=null;job.preview=null;job.status='cancelled';job.code='CANCELLED';this.jobs.delete(job.id);}
  get(owner,id){this.sweep();const job=this.jobs.get(id);if(!job||job.owner!==owner)throw err('NOT_FOUND',404);return job;}
- status(job){return {id:job.id,status:job.status,phase:job.phase,code:job.code,expires_at:new Date(job.expires).toISOString(),...(job.pending?{challenge_kind:job.pending.kind,...(job.pending.choices?{workspace_choices:job.pending.choices}: {})}:{}),...(job.preview?{preview:{...job.preview}}:{})};}
+ status(job){const end=job.finishedAt??this.clock();return {id:job.id,status:job.status,phase:job.phase,code:job.code,phase_elapsed_ms:Math.max(0,end-job.phaseStartedAt),total_elapsed_ms:Math.max(0,end-job.startedAt),expires_at:new Date(job.expires).toISOString(),...(job.pending?{challenge_kind:job.pending.kind,...(job.pending.choices?{workspace_choices:job.pending.choices}: {})}:{}),...(job.preview?{preview:{...job.preview}}:{})};}
  create(owner,input){
   this.sweep();if(this.stopped||!this.ready()||typeof this.engineFor!=='function')throw err('LOGIN_UNAVAILABLE',503);
   if(this.active>=this.maxActive||this.jobs.size>=this.maxJobs)throw err('CAPACITY_EXCEEDED',429);
-  const record=validateInput(input);const job={id:randomBytes(24).toString('base64url'),owner,status:'running',phase:'session',code:'SESSION_STARTED',expires:this.clock()+this.ttlMs,record,credential:null,preview:null,pending:null,controller:new AbortController()};
+  const record=validateInput(input);const startedAt=this.clock();const job={id:randomBytes(24).toString('base64url'),owner,status:'running',phase:'session',code:'SESSION_STARTED',startedAt,phaseStartedAt:startedAt,finishedAt:null,expires:startedAt+this.ttlMs,record,credential:null,preview:null,pending:null,controller:new AbortController()};
   this.jobs.set(job.id,job);this.active++;queueMicrotask(()=>{void this.run(job);});return this.status(job);
  }
  async wait(job,kind,{choices,signal}={}){
@@ -48,7 +48,7 @@ export class JobStore{
    if(new Set(safeChoices.map(c=>c.id)).size!==safeChoices.length)throw err('INVALID_LOGIN_RESPONSE');
    const serialized=JSON.stringify(safeChoices);if([job.record.password,job.record.totpSecret].some(s=>s.length>=4&&serialized.includes(s)))throw err('INVALID_LOGIN_RESPONSE');
   }
-  job.status='awaiting_input';job.phase=kind==='email_otp'?'email_otp':'authorization';job.code=kind==='email_otp'?'EMAIL_CODE_REQUIRED':'WORKSPACE_SELECTION_REQUIRED';
+  job.status='awaiting_input';const nextPhase=kind==='email_otp'?'email_otp':'authorization';if(job.phase!==nextPhase){job.phase=nextPhase;job.phaseStartedAt=this.clock();}job.code=kind==='email_otp'?'EMAIL_CODE_REQUIRED':'WORKSPACE_SELECTION_REQUIRED';
   return new Promise((resolve,reject)=>{
    const abort=()=>finish(reject,err('CANCELLED'));
    const finish=(fn,value)=>{signal?.removeEventListener('abort',abort);job.controller.signal.removeEventListener('abort',abort);job.pending=null;if(!job.controller.signal.aborted){job.status='running';job.code=kind==='email_otp'?'EMAIL_OTP_STARTED':'AUTHORIZATION_STARTED';}fn(value);};
@@ -65,17 +65,17 @@ export class JobStore{
    if(job.controller.signal.aborted)return;
    const engine=await this.engineFor(record);
    const result=await engine.login(record,{signal:job.controller.signal,
-    onProgress:event=>{if(job.controller.signal.aborted||terminal.has(job.status)||job.status==='awaiting_input')return;if(phases.has(event.phase))job.phase=event.phase;if(codes.has(event.code))job.code=event.code;},
+    onProgress:event=>{if(job.controller.signal.aborted||terminal.has(job.status)||job.status==='awaiting_input')return;if(phases.has(event.phase)&&event.phase!==job.phase){job.phase=event.phase;job.phaseStartedAt=this.clock();}if(codes.has(event.code))job.code=event.code;},
     requestEmailCode:options=>this.wait(job,'email_otp',options),
     requestWorkspaceSelection:options=>this.wait(job,'workspace',options),
    });
    if(job.controller.signal.aborted||!this.jobs.has(job.id)||this.clock()>=job.expires)return;
    const c=result?.credential;if(!object(c)||c.type!=='oai-basispoints'||c.client_id!=='app_fnr0pYvVwwFDocDumLG3H2Bp'||typeof c.access_token!=='string'||!c.access_token||typeof c.refresh_token!=='string'||!c.refresh_token)throw err('TOKEN_INCOMPLETE');
-   job.credential=c;job.status='ready';job.phase='validate';job.code='CREDENTIAL_VALIDATED';
+   job.credential=c;job.status='ready';if(job.phase!=='validate'){job.phase='validate';job.phaseStartedAt=this.clock();}job.code='CREDENTIAL_VALIDATED';job.finishedAt=this.clock();
    const preview={email:c.email,workspace_id:c.account_id,plan_type:c.plan_type,client_id:c.client_id,expires_at:c.expired};
    for(const [key,value] of Object.entries(preview)){if(!cleanText(value,320)||[record.password,record.totpSecret,c.access_token,c.refresh_token,c.id_token].some(s=>typeof s==='string'&&s.length>=4&&value.includes(s)))delete preview[key];}
    job.preview=preview;
-  }catch(error){if(this.jobs.has(job.id)&&!job.controller.signal.aborted){const safe=sanitizeLoginError(error,[record.email,record.password,record.totpSecret,record.proxyUrl]);job.status='failed';job.code=safe.code;job.credential=null;job.preview=null;}}
+  }catch(error){if(this.jobs.has(job.id)&&!job.controller.signal.aborted){const safe=sanitizeLoginError(error,[record.email,record.password,record.totpSecret,record.proxyUrl]);job.status='failed';job.code=safe.code;job.finishedAt=this.clock();job.credential=null;job.preview=null;}}
   finally{job.record=null;if(record){record.password='';record.totpSecret='';record.proxyUrl='';}this.active--;}
  }
  async close(){this.stopped=true;clearInterval(this.sweeper);for(const job of [...this.jobs.values()])this.erase(job);}

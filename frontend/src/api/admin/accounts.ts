@@ -867,6 +867,8 @@ export interface BpsLoginJob {
   id: string
   status: BpsLoginStatus
   phase: string
+  phase_elapsed_ms?: number
+  total_elapsed_ms?: number
   code?: string
   expires_at: string | number
   challenge_kind?: 'email_otp' | 'workspace'

@@ -14,6 +14,15 @@ beforeEach(() => {
 })
 afterEach(() => { wrapper?.unmount(); vi.useRealTimers() })
 describe('BPS batch UI', () => {
+  it('shows the live login phase and server measured phase duration', async () => {
+    api.startBpsLogin.mockResolvedValueOnce({ id: 'phase@example.test', status: 'running', phase: 'password', phase_elapsed_ms: 12340, total_elapsed_ms: 20500, code: 'PASSWORD_STARTED', expires_at: Date.now() + 600000 })
+    wrapper = mount(BpsBatchLoginFlow, { props: { getImportOptions: () => ({ group_ids: [2] }) } })
+    await wrapper.get('[data-testid="bps-batch-input"]').setValue('phase@example.test----private-pass----JBSWY3DPEHPK3PXP')
+    await wrapper.get('form').trigger('submit'); await flushPromises()
+    expect(wrapper.text()).toContain('bpsPhasePassword')
+    expect(wrapper.text()).toContain('12.3s')
+  })
+
   it('clears the pasted credentials, filters failures, and explicitly imports successes', async () => {
     wrapper = mount(BpsBatchLoginFlow, { props: { getImportOptions: () => ({ group_ids: [2] }) } })
     await wrapper.get('[data-testid="bps-batch-input"]').setValue('good@example.test----private-pass----JBSWY3DPEHPK3PXP\nbad@example.test----other-pass----JBSWY3DPEHPK3PXP')

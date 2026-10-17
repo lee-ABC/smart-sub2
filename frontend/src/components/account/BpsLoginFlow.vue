@@ -32,7 +32,7 @@
     </form>
 
     <div v-if="job" class="space-y-3">
-      <p role="status" class="text-sm" data-testid="bps-job-status">{{ statusText }}<span v-if="job.status === 'running'"> · {{ phaseText }}</span></p>
+      <p role="status" class="text-sm" data-testid="bps-job-status">{{ statusText }}<span v-if="job.status === 'running'"> · {{ phaseText }}<span v-if="typeof job.phase_elapsed_ms === 'number'"> ({{ (job.phase_elapsed_ms / 1000).toFixed(1) }}s)</span></span></p>
       <p v-if="job.expires_at" class="text-xs text-gray-500">{{ t('admin.accounts.oauth.openai.bpsLoginExpires') }}: {{ displayTime(job.expires_at) }}</p>
       <form v-if="job.status === 'awaiting_input' && job.challenge_kind === 'email_otp'" class="space-y-2" @submit.prevent="sendInput('email_otp')">
         <label class="block text-sm">
@@ -147,7 +147,7 @@ const applyJob = (value: BpsLoginJob) => {
   const challengeChanged = job.value?.challenge_kind !== value.challenge_kind || job.value?.status !== value.status
   // Keep only the public job projection. Tokens are never requested or displayed.
   job.value = {
-    id: value.id, status: value.status, phase: value.phase, code: value.code,
+    id: value.id, status: value.status, phase: value.phase, phase_elapsed_ms: value.phase_elapsed_ms, total_elapsed_ms: value.total_elapsed_ms, code: value.code,
     expires_at: value.expires_at, challenge_kind: value.challenge_kind,
     workspace_choices: value.workspace_choices, preview: value.preview,
   }

@@ -20,7 +20,7 @@ test('reviewed paired SDK and Cookie fix are pinned; native readiness has no net
 });
 
 test('native proxy reaches authorize/password/TOTP/workspace select/token and Business lookup',async()=>{
- const trace=[];let authState;
+ const trace=[];let authState,prewarmed=0;
  const factory=async context=>{assert.equal(context.proxyUrl,proxy);const native={lastSession:{workspaces:[{id:'business',name:'Team',kind:'team'}]},
   _sentinel:async()=>({}),bootstrapAuthorize:async url=>{authState=new URL(url).searchParams.get('state');trace.push(['authorize',context.proxyUrl]);},
   _postWithSentinel:async(path)=>{trace.push([path,context.proxyUrl]);return {status:200,data:{page:path.includes('password')?{type:'mfa',payload:{factor_id:'f',factor_type:'totp'}}:{type:'password'}}};},
@@ -31,9 +31,9 @@ test('native proxy reaches authorize/password/TOTP/workspace select/token and Bu
  factory.workspaceLookup=async(_token,options)=>{assert.equal(options.proxyUrl,proxy);trace.push(['workspace-check',options.proxyUrl]);return proof();};
  factory.businessUsageLookup=async(_token,options)=>{assert.equal(options.proxyUrl,proxy);return {accountId:'business',plan:'team',source:'wham_usage',checkedAt:new Date().toISOString(),allowed:true,limitReached:false};};
  class Session{constructor(options){assert.equal(options.proxy,proxy);trace.push(['token-session',options.proxy]);}async post(url,options){assert.equal(url,ADDIN_AUTHORIZATION.tokenUrl);assert.equal(options.followRedirects,false);return {status:200,text:async()=>JSON.stringify({access_token:token(),refresh_token:'synthetic-refresh',expires_in:3600})};}async close(){}}
- const runtime=await createNativeRuntime({factoryLoader:async(_root,_storage,options)=>{assert.equal(options.sdkContextMode,'paired');assert.equal(options.approvedSdkSha256,SDK_SHA256);return factory;},dependencies:{tls:{Session},rtClientIdentifier:()=> 'fixture',headerOrderFor:x=>x}});
+ const runtime=await createNativeRuntime({factoryLoader:async(_root,_storage,options)=>{assert.equal(options.sdkContextMode,'paired');assert.equal(options.approvedSdkSha256,SDK_SHA256);return factory;},dependencies:{tls:{Session,initTLS:async()=>{prewarmed++;}},rtClientIdentifier:()=> 'fixture',headerOrderFor:x=>x}});
  const record={email,password:'synthetic-password',totpSecret:'JBSWY3DPEHPK3PXP',workspacePreference:'team_first',proxyUrl:proxy};
- const result=await runtime.engineFor(record).login(record);assert.equal(result.credential.account_id,'business');
+ const result=await runtime.engineFor(record).login(record);assert.equal(result.credential.account_id,'business');assert.equal(prewarmed,1);
  for(const name of ['authorize','/api/accounts/authorize/continue','/api/accounts/password/verify','issue-mfa','verify-mfa','/api/accounts/workspace/select','token-session','workspace-check'])assert.ok(trace.some(row=>row[0]===name&&row[1]===proxy),name);
 });
 

@@ -133,6 +133,11 @@ export function scopedSdkExports(original, sdkContextMode = 'legacy') {
   const BaseClient = original.SentinelClient;
   return { ...original, SentinelClient: class ScopedSentinelClient extends BaseClient {
     constructor(options) { super({ ...options, ipcHandshake: true }); }
+    _dwellMsFor(flow) {
+      if (process.env.BPS_LOGIN_DWELL_PROFILE !== 'balanced') return super._dwellMsFor(flow);
+      const [lo, hi] = /create_account/.test(String(flow || '')) ? [13250, 16000] : [5000, 9000];
+      return Math.round(lo + Math.random() * (hi - lo));
+    }
   } };
 }
 

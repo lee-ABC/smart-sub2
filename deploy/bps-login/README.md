@@ -27,6 +27,22 @@ network, not a public published port, should expose this helper to Sub2API.
 A read-only root filesystem with a64MiB `/tmp` tmpfs is supported; temporary
 native-library copies contain public code only, never account credentials.
 
+## Sub2 connection configuration
+
+The Sub2 application container must set the complete worker API prefix:
+
+```text
+SUB2_BPS_LOGIN_URL=http://bps-login:8001/internal/v1
+SUB2_BPS_LOGIN_KEY_FILE=/app/data/bps-login-key
+```
+
+The application key file and helper key must contain the same private secret.
+A URL without `/internal/v1` fails validation before any login job is created.
+A healthy `/healthz` alone does not verify this integration. Verify the runtime
+application URL and matching keys, then issue an authenticated GET for a
+nonexistent job: the expected 404 confirms the private path/authentication
+without submitting a login or importing an account.
+
 ## HTTP contract
 
 Private requests require `Authorization: Bearer <login key>` plus trusted

@@ -22,6 +22,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"regexp"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -3281,12 +3282,30 @@ func (s *AccountTestService) sendErrorAndEnd(c *gin.Context, errorMsg string) er
 
 // RunTestBackground executes an account test in-memory (no real HTTP client),
 // capturing SSE output via httptest.NewRecorder, then parses the result.
-func (s *AccountTestService) RunTestBackground(ctx context.Context, accountID int64, modelID string) (*ScheduledTestResult, error) {
+func (s *AccountTestService) RunTestBackground(ctx context.Context, accountID int64, modelID string) (result *ScheduledTestResult, err error) {
 	startedAt := time.Now()
+	// Scheduled probes run outside the HTTP recovery middleware. Keep a failed
+	// probe from terminating the gateway, and return a failed result so the
+	// scheduler records it and advances the plan without auto-recovering it.
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			// Do not log the panic value: upstream/provider errors may contain secrets.
+			log.Printf("[AccountTest] background probe panicked account=%d type=%T\n%s", accountID, recovered, debug.Stack())
+			finishedAt := time.Now()
+			result = &ScheduledTestResult{
+				Status:       "failed",
+				ErrorMessage: "Background account test failed due to an internal error",
+				LatencyMs:    finishedAt.Sub(startedAt).Milliseconds(),
+				StartedAt:    startedAt,
+				FinishedAt:   finishedAt,
+			}
+			err = nil
+		}
+	}()
 
 	w := httptest.NewRecorder()
 	ginCtx, _ := gin.CreateTestContext(w)
-	ginCtx.Request = (&http.Request{}).WithContext(ctx)
+	ginCtx.Request = httptest.NewRequest(http.MethodPost, "/test", nil).WithContext(ctx)
 
 	testErr := s.TestAccountConnection(ginCtx, accountID, modelID, "", AccountTestModeDefault)
 

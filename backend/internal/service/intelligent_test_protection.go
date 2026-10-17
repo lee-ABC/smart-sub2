@@ -46,6 +46,10 @@ func prepareIntelligentTestProtection(c *gin.Context, account *Account, payload 
 	if ids != nil && ids.mode != codexFingerprintDevice {
 		identity.sessionID, identity.threadID = ids.sessionID, ids.threadID
 	}
+	// Background probes may have no incoming HTTP headers.
+	if c.Request.Header == nil {
+		c.Request.Header = make(http.Header)
+	}
 	c.Request.Header.Set("session-id", rawSession)
 	c.Set(intelligentTestIdentityKey, identity)
 	applyStagedCodexFingerprintClientMetadata(c, account, payload)

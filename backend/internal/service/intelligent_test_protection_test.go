@@ -81,6 +81,16 @@ func TestIntelligentProtectedResponsesUsesStableDeviceAndIndependentSessions(t *
 	require.Len(t, headers, 3)
 	require.Equal(t, expectedDevice, headers[2].Get("x-codex-installation-id"))
 	require.Equal(t, expectedDevice, bodies[2]["client_metadata"].(map[string]any)["x-codex-installation-id"])
+
+	// Scheduled tests construct their own request without a real HTTP client.
+	result, err := svc.RunTestBackground(context.Background(), account.ID, "gpt-5.2")
+	require.NoError(t, err)
+	require.Equal(t, "success", result.Status)
+	require.Len(t, headers, 4)
+	require.Equal(t, expectedDevice, headers[3].Get("x-codex-installation-id"))
+	require.NotEmpty(t, headers[3].Get("session-id"))
+	require.Equal(t, headers[3].Get("session-id"), bodies[3]["client_metadata"].(map[string]any)["session_id"])
+	require.Zero(t, repo.writes)
 }
 
 func TestIntelligentProtectionRejectsLostPrompt(t *testing.T) {
@@ -97,4 +107,19 @@ func TestIntelligentProtectionRejectsLostPrompt(t *testing.T) {
 	body, err := json.Marshal(payload)
 	require.NoError(t, err)
 	require.ErrorContains(t, applyIntelligentTestProtection(c, account, http.Header{}, body), "input")
+}
+
+func TestIntelligentProtectionInitializesMissingRequestHeaders(t *testing.T) {
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = (&http.Request{}).WithContext(context.Background())
+	account := &Account{ID: 812, Platform: PlatformOpenAI, Type: AccountTypeOAuth}
+	admin := &adminServiceImpl{accountRepo: &upstreamBillingProbeAccountRepo{accounts: map[int64]*Account{account.ID: account}}}
+	account, err := NewAntiDegradeService(admin).ApplyAntiDegradeMode(context.Background(), account.ID, AntiDegradeMode1)
+	require.NoError(t, err)
+	payload := createOpenAITestPayload("gpt-5.2", true)
+	require.NoError(t, prepareIntelligentTestProtection(c, account, payload))
+	require.NotEmpty(t, c.Request.Header.Get("session-id"))
+	metadata := payload["client_metadata"].(map[string]any)
+	require.NotEmpty(t, metadata["session_id"])
+	require.NotEmpty(t, metadata["thread_id"])
 }

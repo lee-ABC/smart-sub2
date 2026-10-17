@@ -3418,7 +3418,20 @@ func credentialFailoverClientResponse(failoverErr *service.UpstreamFailoverError
 	if failoverErr != nil && failoverErr.Reason == service.AntigravityCredentialRejectedReason {
 		return http.StatusBadGateway, service.AntigravityCredentialRejectedClientMessage
 	}
-	return http.StatusServiceUnavailable, service.GrokCredentialUnavailableClientMessage
+	if failoverErr != nil {
+		switch failoverErr.Reason {
+		case service.NativeOAuthCredentialsUnavailableReason:
+			return http.StatusServiceUnavailable, service.NativeOAuthCredentialsUnavailableMessage
+		case service.BPSOAuthCredentialsUnavailableReason:
+			return http.StatusServiceUnavailable, service.BPSOAuthCredentialsUnavailableMessage
+		}
+		// The shared OpenAI-compatible handler also serves non-Grok providers.
+		// Only an explicitly classified Grok failure may use the Grok message.
+		if strings.HasPrefix(string(failoverErr.Reason), "grok_oauth_") {
+			return http.StatusServiceUnavailable, service.GrokCredentialUnavailableClientMessage
+		}
+	}
+	return http.StatusServiceUnavailable, "No healthy upstream account is currently available"
 }
 
 func copyFailoverRetryAfter(c *gin.Context, headers http.Header) {
@@ -3791,9 +3804,8 @@ func closeOpenAIWSFailoverExhausted(c *gin.Context, conn *coderws.Conn, failover
 				cancel()
 			}
 		} else if failoverErr.Stage == service.GatewayFailureStageAccountAuth {
-			intendedStatus = http.StatusServiceUnavailable
+			intendedStatus, message = credentialFailoverClientResponse(failoverErr)
 			errorType = "api_error"
-			message = service.GrokCredentialUnavailableClientMessage
 			closeStatus = coderws.StatusTryAgainLater
 		} else {
 			switch failoverErr.StatusCode {

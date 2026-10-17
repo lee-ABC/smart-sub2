@@ -174,6 +174,13 @@ func bpsProfileToken(account *Account) (string, error) {
 	return bpsString(profile, "access_token"), nil
 }
 
+const (
+	NativeOAuthCredentialsUnavailableReason  GatewayFailureReason = "native_credentials_unavailable"
+	BPSOAuthCredentialsUnavailableReason     GatewayFailureReason = "bps_credentials_unavailable"
+	NativeOAuthCredentialsUnavailableMessage                      = "Native OAuth credentials are missing or invalid; import the native credential file"
+	BPSOAuthCredentialsUnavailableMessage                         = "BPS OAuth credentials are missing, expired or inconsistent; import the BPS credential file"
+)
+
 func outboundCredentialFailover(err error, bps bool) error {
 	if err == nil {
 		return nil
@@ -181,11 +188,11 @@ func outboundCredentialFailover(err error, bps bool) error {
 	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 		return err
 	}
-	reason := GatewayFailureReason("native_credentials_unavailable")
-	message := "Native OAuth credentials are missing or invalid; import the native credential file"
+	reason := NativeOAuthCredentialsUnavailableReason
+	message := NativeOAuthCredentialsUnavailableMessage
 	if bps {
-		reason = "bps_credentials_unavailable"
-		message = "BPS OAuth credentials are missing, expired or inconsistent; import the BPS credential file"
+		reason = BPSOAuthCredentialsUnavailableReason
+		message = BPSOAuthCredentialsUnavailableMessage
 	}
 	return &UpstreamFailoverError{Stage: GatewayFailureStageAccountAuth, Scope: GatewayFailureScopeRequest, Reason: reason, NextAccountAction: NextAccountRetry, ClientStatusCode: http.StatusServiceUnavailable, ClientMessage: message, RequestScopedTransient: true}
 }

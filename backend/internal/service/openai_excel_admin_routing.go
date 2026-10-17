@@ -16,6 +16,21 @@ type excelAccountTestRoute struct {
 }
 type excelAccountTestRouteKey struct{}
 
+// isBPSExcelModelForGroup lets a BPS-only OAuth account use the Excel/BPS
+// capability catalog even when an older native model_mapping omitted a newly
+// added model. Native accounts and non-Excel groups keep the existing
+// model_mapping gate.
+func isBPSExcelModelForGroup(account *Account, groupID *int64, model string) bool {
+	if account == nil || groupID == nil || *groupID <= 0 || !account.IsOpenAIOAuthLike() || !IsExcelSupportedModel(excelRoutingModel(account, model, "")) {
+		return false
+	}
+	if _, ok := account.Credentials[BPSCredentialKey]; !ok {
+		return false
+	}
+	cfg, err := ReadExcelRoutingConfig()
+	return err == nil && cfg.Mode(*groupID) == "excel"
+}
+
 func prepareExcelAccountTestContext(ctx context.Context, account *Account, requestedGroup int64, model string) (context.Context, *excelAccountTestRoute, error) {
 	if account == nil {
 		return ctx, nil, fmt.Errorf("account unavailable")

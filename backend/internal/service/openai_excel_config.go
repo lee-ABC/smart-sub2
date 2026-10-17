@@ -127,13 +127,13 @@ func SetExcelGroupMode(groupID int64, mode string) error {
 
 // ExcelModelIDs is the shared public and admin-probe catalog.
 func ExcelModelIDs() []string {
-	return []string{"gpt-6-sol", "gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"}
+	return []string{"gpt-6-sol", "gpt-6.1-sol", "gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna"}
 }
 
 // Models outside the Excel adapter retain the native transport.
 func IsExcelSupportedModel(model string) bool {
 	switch strings.TrimSpace(model) {
-	case "gpt-6-sol", "gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna",
+	case "gpt-6-sol", "gpt-6.1-sol", "gpt-6-astra", "gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna",
 		"gpt-6-excel", "gpt-6-astra-excel", "gpt-5.6-sol-excel", "gpt-5.6-terra-excel", "gpt-5.6-luna-excel":
 		return true
 	default:

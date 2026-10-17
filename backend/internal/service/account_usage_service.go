@@ -360,7 +360,8 @@ func (s *AccountUsageService) getUsageForAccount(ctx context.Context, account *A
 
 	if account.Platform == PlatformOpenAI && account.Type == AccountTypeOAuth {
 		usage, err := s.getOpenAIUsage(ctx, account, forceProbe)
-		if err == nil {
+		// A quota GET does not prove inference or account health has recovered.
+		if err == nil && !usesBPSOnlyQuotaCredentials(account) {
 			s.tryClearRecoverableAccountError(ctx, account)
 		}
 		return usage, err
@@ -739,6 +740,36 @@ func (s *AccountUsageService) getOpenAIUsage(ctx context.Context, account *Accou
 					}
 				}
 			}
+		} else if usesBPSOnlyQuotaCredentials(account) {
+			// Never send BPS credentials to the native /responses generation probe.
+			if s.openAIQuotaService == nil {
+				return nil, fmt.Errorf("BPS quota service is not configured")
+			}
+			quotaUsage, err := s.openAIQuotaService.QueryUsage(ctx, account.ID)
+			if err != nil {
+				return nil, err
+			}
+			updates := buildOpenAIAutoResetUsageUpdates(quotaUsage, now)
+			if len(updates) == 0 || (quotaUsage.RateLimit.PrimaryWindow == nil && quotaUsage.RateLimit.SecondaryWindow == nil) {
+				return nil, fmt.Errorf("BPS quota response contains no rate-limit data")
+			}
+			// Explicitly retire old windows absent from the fresh quota response.
+			for _, window := range []string{"5h", "7d"} {
+				if _, present := updates["codex_"+window+"_used_percent"]; !present {
+					for _, suffix := range []string{"used_percent", "reset_after_seconds", "reset_at", "window_minutes"} {
+						updates["codex_"+window+"_"+suffix] = nil
+					}
+				}
+			}
+			// Persist telemetry only: do not consume a credit or trigger health recovery.
+			if s.accountRepo != nil {
+				if err := s.accountRepo.UpdateExtra(ctx, account.ID, updates); err != nil {
+					return nil, fmt.Errorf("persist BPS quota snapshot: %w", err)
+				}
+			}
+			mergeAccountExtra(account, updates)
+			usage.FiveHour, usage.SevenDay = nil, nil
+			applyExtraToUsage(usage, account.Extra, now)
 		} else {
 			if updates, err := s.probeOpenAICodexSnapshot(ctx, account); err == nil && len(updates) > 0 {
 				mergeAccountExtra(account, updates)
@@ -750,22 +781,31 @@ func (s *AccountUsageService) getOpenAIUsage(ctx context.Context, account *Accou
 		}
 	}
 
+	// A throttled failed lookup must not masquerade as a successful empty quota.
+	bpsOnly := usesBPSOnlyQuotaCredentials(account)
+	if bpsOnly && usage.FiveHour == nil && usage.SevenDay == nil {
+		return nil, fmt.Errorf("BPS quota snapshot unavailable; refresh to retry")
+	}
 	if s.usageLogRepo == nil {
 		return usage, nil
 	}
 
-	if stats, err := s.usageLogRepo.GetAccountWindowStats(ctx, account.ID, codexWindowStatsStart(usage.FiveHour, 5*time.Hour, now)); err == nil {
-		if usage.FiveHour == nil {
-			usage.FiveHour = &UsageProgress{Utilization: 0}
+	if !bpsOnly || usage.FiveHour != nil {
+		if stats, err := s.usageLogRepo.GetAccountWindowStats(ctx, account.ID, codexWindowStatsStart(usage.FiveHour, 5*time.Hour, now)); err == nil {
+			if usage.FiveHour == nil {
+				usage.FiveHour = &UsageProgress{Utilization: 0}
+			}
+			usage.FiveHour.WindowStats = windowStatsFromAccountStats(stats)
 		}
-		usage.FiveHour.WindowStats = windowStatsFromAccountStats(stats)
 	}
 
-	if stats, err := s.usageLogRepo.GetAccountWindowStats(ctx, account.ID, codexWindowStatsStart(usage.SevenDay, 7*24*time.Hour, now)); err == nil {
-		if usage.SevenDay == nil {
-			usage.SevenDay = &UsageProgress{Utilization: 0}
+	if !bpsOnly || usage.SevenDay != nil {
+		if stats, err := s.usageLogRepo.GetAccountWindowStats(ctx, account.ID, codexWindowStatsStart(usage.SevenDay, 7*24*time.Hour, now)); err == nil {
+			if usage.SevenDay == nil {
+				usage.SevenDay = &UsageProgress{Utilization: 0}
+			}
+			usage.SevenDay.WindowStats = windowStatsFromAccountStats(stats)
 		}
-		usage.SevenDay.WindowStats = windowStatsFromAccountStats(stats)
 	}
 
 	return usage, nil
@@ -795,7 +835,7 @@ func isOpenAICodexSnapshotStale(account *Account, now time.Time) bool {
 	// (/wham/usage body 的 codex_bengalfox),与 WSv2 无关——不能用 WSv2 门控其 staleness,否则首刷后
 	// codex_5h/7d 已存在→staleness 恒 false→spark 窗口永久冻结(外审第9轮 P1)。影子改按
 	// codex_usage_updated_at TTL 判定;实际查询频率仍由 shouldProbeOpenAICodexSnapshot 的缓存 TTL 节流。
-	if !account.IsShadow() && !account.IsOpenAIResponsesWebSocketV2Enabled() {
+	if !account.IsShadow() && !usesBPSOnlyQuotaCredentials(account) && !account.IsOpenAIResponsesWebSocketV2Enabled() {
 		return false
 	}
 	if account.Extra == nil {
@@ -1505,7 +1545,7 @@ func buildCodexUsageProgressFromExtra(extra map[string]any, window string, now t
 	}
 
 	usedRaw, ok := extra[usedPercentKey]
-	if !ok {
+	if !ok || usedRaw == nil {
 		return nil
 	}
 

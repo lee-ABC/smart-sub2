@@ -126,6 +126,19 @@ func BPSCredentialIdentity(account *Account) (workspace, user string, err error)
 	return claims.Auth.AccountID, claims.Auth.UserID, nil
 }
 
+// usesBPSOnlyQuotaCredentials selects BPS only for read-only quota queries.
+// Never fall back after a native failure or mix credential namespaces.
+func usesBPSOnlyQuotaCredentials(account *Account) bool {
+	if account == nil || !account.IsOpenAIOAuth() || account.IsOpenAIAgentIdentity() {
+		return false
+	}
+	if strings.TrimSpace(account.GetOpenAIAccessToken()) != "" || strings.TrimSpace(account.GetOpenAIRefreshToken()) != "" {
+		return false
+	}
+	_, present := account.Credentials[BPSCredentialKey]
+	return present
+}
+
 func NativeOAuthCredentialError(account *Account) error {
 	if account == nil || account.Platform != PlatformOpenAI || !account.IsOpenAIOAuthLike() {
 		return nil

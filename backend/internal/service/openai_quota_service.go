@@ -144,7 +144,7 @@ func NewOpenAIQuotaService(
 // OAuth account. Returns infraerrors so the handler layer can map them to
 // stable error codes / HTTP statuses.
 func (s *OpenAIQuotaService) QueryUsage(ctx context.Context, accountID int64) (*OpenAIQuotaUsage, error) {
-	accessToken, chatGPTAccountID, proxyURL, fedRAMP, err := s.prepareUpstreamCall(ctx, accountID)
+	accessToken, chatGPTAccountID, proxyURL, fedRAMP, err := s.prepareQuotaUpstreamCall(ctx, accountID, true)
 	if err != nil {
 		return nil, err
 	}
@@ -402,6 +402,11 @@ func (s *OpenAIQuotaService) resetCredit(ctx context.Context, accountID int64, c
 // token via the shared TokenProvider, and resolves the chatgpt-account-id and
 // proxy URL. Centralized so QueryUsage / ResetCredit share validation.
 func (s *OpenAIQuotaService) prepareUpstreamCall(ctx context.Context, accountID int64) (accessToken, chatGPTAccountID, proxyURL string, fedRAMP bool, err error) {
+	// Credit consumption retains its original native-only authentication contract.
+	return s.prepareQuotaUpstreamCall(ctx, accountID, false)
+}
+
+func (s *OpenAIQuotaService) prepareQuotaUpstreamCall(ctx context.Context, accountID int64, allowBPS bool) (accessToken, chatGPTAccountID, proxyURL string, fedRAMP bool, err error) {
 	if s == nil || s.accountRepo == nil || s.privacyClientFactory == nil {
 		return "", "", "", false, infraerrors.New(http.StatusInternalServerError, "OPENAI_QUOTA_NOT_CONFIGURED", "openai quota service is not configured")
 	}
@@ -431,10 +436,19 @@ func (s *OpenAIQuotaService) prepareUpstreamCall(ctx context.Context, accountID 
 		account = resolved
 	}
 
-	chatGPTAccountID = strings.TrimSpace(account.GetCredential("chatgpt_account_id"))
-	if chatGPTAccountID == "" {
-		// Fall back to organization_id — some legacy accounts only persisted poid.
-		chatGPTAccountID = strings.TrimSpace(account.GetCredential("organization_id"))
+	useBPS := allowBPS && usesBPSOnlyQuotaCredentials(account)
+	if useBPS {
+		// Workspace and token must come from the same validated profile.
+		chatGPTAccountID, _, err = BPSCredentialIdentity(account)
+		if err != nil {
+			return "", "", "", false, infraerrors.Newf(http.StatusBadGateway, "OPENAI_QUOTA_TOKEN_UNAVAILABLE", "failed to acquire BPS credentials: %v", err)
+		}
+	} else {
+		chatGPTAccountID = strings.TrimSpace(account.GetCredential("chatgpt_account_id"))
+		if chatGPTAccountID == "" {
+			// Fall back to organization_id — some legacy accounts only persisted poid.
+			chatGPTAccountID = strings.TrimSpace(account.GetCredential("organization_id"))
+		}
 	}
 	if chatGPTAccountID == "" {
 		return "", "", "", false, infraerrors.New(http.StatusBadRequest, "OPENAI_QUOTA_MISSING_ACCOUNT_ID", "chatgpt_account_id is missing; please re-authorize this account")
@@ -444,7 +458,11 @@ func (s *OpenAIQuotaService) prepareUpstreamCall(ctx context.Context, accountID 
 		if s.tokenProvider == nil {
 			return "", "", "", false, infraerrors.New(http.StatusInternalServerError, "OPENAI_QUOTA_NOT_CONFIGURED", "openai quota token provider is not configured")
 		}
-		accessToken, err = s.tokenProvider.GetAccessToken(ctx, account)
+		if useBPS {
+			accessToken, err = s.tokenProvider.GetBPSAccessToken(ctx, account)
+		} else {
+			accessToken, err = s.tokenProvider.GetAccessToken(ctx, account)
+		}
 		if err != nil {
 			return "", "", "", false, infraerrors.Newf(http.StatusBadGateway, "OPENAI_QUOTA_TOKEN_UNAVAILABLE", "failed to acquire access token: %v", err)
 		}

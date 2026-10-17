@@ -31,6 +31,14 @@ Validation:78 focused frontend cases, TypeScript and targeted ESLint;58 helper
 cases. No real provider login was performed with example credentials.
 The private helper remains bounded:5 active jobs,128 retained jobs,10-minute TTL.
 
+## BPS quota compatibility — 2026-10-17
+
+BPS-only OAuth accounts now query usage and reset-credit counts through their
+isolated BPS credentials. Native credentials and credit consumption retain their
+existing contracts; no schema or dependency changes are included. See
+`docs/bps-quota-readonly.md` for behavior, regression scope, and metric limits.
+This source update does not by itself upgrade a running deployment.
+
 ---
 
 # 部署版本源码快照 / Deployed source snapshot

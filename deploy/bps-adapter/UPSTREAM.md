@@ -23,7 +23,8 @@ Build and test with `-tags=http2legacy` (Dockerfile/Makefile do this). Go 1.27's
 new x/net HTTP2 wrapper changes reservation/retirement semantics; this tag keeps
 the same implementation CPA uses under Go 1.26. Startup rejects Go 1.27 builds
 that omit the tag. Dependencies' notices are retained under licenses/.
-It exposes only authenticated POST /internal/v1/responses and /health[z].
+Its private listener exposes authenticated POST /internal/v1/responses and /health[z].
+An optional separate public listener exposes only the temporary token-image resource.
 No CPA account pool, auth files, OAuth flow, refresh, management, quota polling,
 credential disabling, or scheduler is exposed. Sub2 owns these responsibilities.
 Explicit model mapping prevents gpt-6-sol silently becoming gpt-6-astra.

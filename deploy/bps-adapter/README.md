@@ -54,10 +54,10 @@ returned, not retried under a different model.
   an existing read-only secret. Do not change secret ownership opportunistically.
 
 The wrapper forcibly disables CPA's separate concurrency caps, account mutation,
-quota polling, data directory and public inline-image relay. It fixes the target,
+quota polling and data directory. It fixes the target,
 models and mapping even if optional relay YAML tries to override them. Existing
-plain-text and client-tool behavior remains upstream CPA; inline images fail
-explicitly unless another supported path handled them before this adapter.
+plain-text and client-tool behavior remains upstream CPA. Inline-image relay is
+opt-in as documented below; without its configuration, images fail explicitly.
 
 Only source/mock/local TLS tests are provided. They do not establish live account
 entitlement or production inference success; do not enable expired/unschedulable
@@ -109,3 +109,22 @@ trusted private `X-Sub2-Excel-Upstream-Started: true` response header. Partial
 writes, post-send disconnects or draining must not cause backend account failover
 or replay; the bridge treats marked outcomes as request-scoped and stops. Proven
 pre-send rejection and ordinary SSE/native behavior retain their existing policy.
+
+## Optional public inline-image relay
+
+The upstream must fetch inline image bytes by URL. To enable this, configure
+`public_base_url: "https://images.example.com/bps-images"` in the private relay
+YAML and set `BPS_IMAGE_LISTEN_ADDR=:8002`. Publish **only that separate port**
+or reverse-proxy it over HTTPS. Keep the private `:8000` transport internal.
+The public listener serves only `GET/HEAD /bps-images/image?t=<token>`; it does
+not expose inference, credentials, quotas or CPA management. Do not infer the
+base URL from client `Host` or forwarded headers. HTTP is also supported for
+operator-controlled deployments; HTTPS is preferred.
+
+Image content is held in bounded memory using the existing CPA relay: 32-byte
+random tokens, a five-minute TTL, bounded fetch counts and image MIME/size
+checks. Content is not written to account storage. URLs are temporary bearer
+capabilities: avoid access logging their query strings. Restarting the adapter
+invalidates its pending image URLs; do not route one adapter's image URL to a
+different replica. The listener returns 404 for unknown/expired tokens and all
+other routes. Leave both settings absent to retain the old disabled behavior.

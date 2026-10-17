@@ -40,6 +40,16 @@ func main() {
 		addr = ":8000"
 	}
 	server := &http.Server{Addr: addr, Handler: a, ReadHeaderTimeout: 10 * time.Second, ReadTimeout: 30 * time.Second, WriteTimeout: a.RequestTimeout() + 10*time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 256 << 10}
+	var imageServer *http.Server
+	if imageAddr := os.Getenv("BPS_IMAGE_LISTEN_ADDR"); imageAddr != "" {
+		imageServer = &http.Server{Addr: imageAddr, Handler: a.ImageHandler(), ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 30 * time.Second, IdleTimeout: 30 * time.Second, MaxHeaderBytes: 16 << 10}
+		go func() {
+			log.Printf("token-only BPS image relay listening on %s", imageAddr)
+			if err := imageServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				log.Fatal("image relay HTTP server failed")
+			}
+		}()
+	}
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
@@ -47,6 +57,9 @@ func main() {
 		a.Shutdown()
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
+		if imageServer != nil {
+			_ = imageServer.Shutdown(ctx)
+		}
 		_ = server.Shutdown(ctx)
 	}()
 	log.Printf("selected-account BPS adapter listening on %s; CPA %s", addr, adapter.UpstreamCommit)

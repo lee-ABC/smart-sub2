@@ -94,3 +94,7 @@ auth_mode: chatgpt
 # experiment_auth_id: ""             # the one credential's AuthID, if declared
 # experiment_shadow_rewrite: false   # queue relay invalid_tool_call for A2 shadow rewrite
 # experiment_scrub: ""               # comma-separated strings to hash out of fixtures
+
+# Optional inline-image relay (separate image-only HTTP listener).
+# Set BPS_IMAGE_LISTEN_ADDR=:8002 and publish/reverse-proxy that port, NOT :8000.
+# public_base_url: https://images.example.com/bps-images

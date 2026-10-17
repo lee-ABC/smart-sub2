@@ -72,6 +72,7 @@ type Adapter struct {
 	identityLogger *log.Logger
 	wsDial         wsDialFunc
 	key            string
+	imagePath      string
 	service        *basispoints.Service
 	mu             sync.Mutex
 	calls          map[string]*invocation
@@ -120,7 +121,11 @@ func New(key string, relayConfig []byte) (*Adapter, error) {
 	cfg["credential_concurrency"] = map[string]int{}
 	cfg["quota_sample_seconds"] = 0
 	cfg["downgrade_guard_enabled"] = false
-	cfg["public_base_url"] = ""
+	imageBase, err := configuredImageBase(cfg["public_base_url"])
+	if err != nil {
+		return nil, err
+	}
+	cfg["public_base_url"] = imageBase
 	cfg["timeout_seconds"] = budget.TimeoutSeconds
 	cfg["max_response_bytes"] = maxBody
 	configYAML, err := yaml.Marshal(cfg)
@@ -133,7 +138,12 @@ func New(key string, relayConfig []byte) (*Adapter, error) {
 			identityMode = strings.ToLower(strings.TrimSpace(mode))
 		}
 	}
-	a := &Adapter{requestTimeout: time.Duration(budget.TimeoutSeconds) * time.Second, identityMode: identityMode, key: strings.TrimSpace(key), service: basispoints.NewService(), calls: map[string]*invocation{}, streams: map[string]*upstream{}, transport: nil}
+	imagePath := ""
+	if imageBase != "" {
+		u, _ := url.Parse(imageBase)
+		imagePath = strings.TrimRight(u.Path, "/") + "/image"
+	}
+	a := &Adapter{imagePath: imagePath, requestTimeout: time.Duration(budget.TimeoutSeconds) * time.Second, identityMode: identityMode, key: strings.TrimSpace(key), service: basispoints.NewService(), calls: map[string]*invocation{}, streams: map[string]*upstream{}, transport: nil}
 	pool := newTransportPool()
 	a.transport, a.closeTransports = pool.get, pool.close
 	a.service.SetHost(a.host)
